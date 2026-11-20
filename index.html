@@ -1,0 +1,1768 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>旅遊短影音自動剪輯工作室 | 旅行社專用版</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+    }
+    /* 隱藏但維持解碼能力的媒體元素，確保 Web Audio API 穩定運作 */
+    .hidden-media {
+      position: fixed;
+      width: 1px;
+      height: 1px;
+      opacity: 0.001;
+      pointer-events: none;
+      z-index: -1;
+      top: 0;
+      left: 0;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #18181b;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #3f3f46;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #52525b;
+    }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen antialiased selection:bg-amber-500/30">
+
+  <!-- 頂部導覽列 -->
+  <header class="border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-bold tracking-tight text-white">旅遊短影音自動剪輯工作室</h1>
+            <span class="hidden sm:inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">旅行社專用版</span>
+          </div>
+          <p class="text-xs text-zinc-400 hidden sm:block">影片照片混剪・渡假調色・柔順轉場・品牌 CTA 片尾</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 text-xs text-zinc-400 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-full shrink-0">
+        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        <span>純本機瀏覽器渲染</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- 提示訊息條（取代 alert） -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- 主要雙欄工作台 -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 lg:py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+
+      <!-- 左欄：可捲動設定與素材區 -->
+      <div class="lg:col-span-7 space-y-6">
+
+        <!-- 0. 一鍵風格預設 -->
+        <section class="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-5 shadow-xl">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-semibold text-white flex items-center gap-2">
+              <span class="text-amber-400">✨</span> 一鍵風格預設
+            </h2>
+            <span class="text-xs text-zinc-500">快速套用最佳剪輯節奏與色調</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button id="presetResortBtn" type="button" class="text-left p-3.5 rounded-xl border transition bg-amber-500/10 border-amber-500/60 ring-1 ring-amber-500/30">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-sm font-bold text-amber-300">🌴 質感渡假風（推薦）</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-200 font-semibold">預設</span>
+              </div>
+              <p class="text-xs text-zinc-400 leading-relaxed">2.8秒・1.0x原速・柔和淡入淡出・渡假暖陽濾鏡・中下方質感字</p>
+            </button>
+            <button id="presetFoodBtn" type="button" class="text-left p-3.5 rounded-xl border transition bg-zinc-950/60 border-zinc-800 hover:border-zinc-700">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-sm font-bold text-zinc-100">🍜 美食快剪風</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 font-semibold">快節奏</span>
+              </div>
+              <p class="text-xs text-zinc-400 leading-relaxed">2.0秒・1.2x微加速・快節奏硬切・美食增色濾鏡・正中央大字</p>
+            </button>
+          </div>
+        </section>
+
+        <!-- 1. 影片與靜態照片素材管理 -->
+        <section class="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-5 shadow-xl">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <h2 class="text-base font-semibold text-white flex items-center gap-2">
+              <span class="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-bold flex items-center justify-center">1</span>
+              影片與照片素材
+              <span id="clipCountBadge" class="text-xs font-normal bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded-full">0 筆</span>
+            </h2>
+            <div class="flex items-center gap-2">
+              <button id="applyTravelSampleBtn" type="button" class="text-xs px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-amber-200 border border-zinc-700 transition">
+                套用旅遊範例文案
+              </button>
+              <button id="clearAllBtn" type="button" class="text-xs px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-rose-950/70 hover:text-rose-300 hover:border-rose-800 text-zinc-300 border border-zinc-700 transition">
+                清空全部
+              </button>
+            </div>
+          </div>
+
+          <!-- 拖曳上傳區 -->
+          <div id="dropZone" class="border-2 border-dashed border-zinc-700 hover:border-amber-500/80 bg-zinc-950/60 hover:bg-amber-500/5 rounded-xl p-6 text-center cursor-pointer transition group">
+            <input id="mediaInput" type="file" accept="video/mp4,video/quicktime,video/webm,image/jpeg,image/png,image/webp,.mp4,.mov,.webm,.jpg,.jpeg,.png,.webp" multiple class="hidden" />
+            <div class="w-12 h-12 rounded-full bg-zinc-900 border border-zinc-800 group-hover:border-amber-500/40 flex items-center justify-center mx-auto mb-3 transition">
+              <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+            </div>
+            <p class="text-sm font-medium text-zinc-200">拖曳多段影片與照片到此處，或點擊選擇檔案</p>
+            <p class="text-xs text-zinc-500 mt-1">支援 MP4、MOV、WebM 影片，以及 JPG、PNG、WebP 靜態照片混剪</p>
+          </div>
+
+          <!-- 素材清單 -->
+          <div id="clipsList" class="mt-4 space-y-3"></div>
+          <div id="emptyClipsHint" class="mt-4 text-center py-6 text-xs text-zinc-500 bg-zinc-950/40 rounded-xl border border-zinc-800/60">
+            尚未加入任何素材，建議先放入飯店外觀、房內景觀、美食與體驗片段。
+          </div>
+        </section>
+
+        <!-- 2. 調色濾鏡、轉場與節奏參數 -->
+        <section class="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-5 shadow-xl">
+          <h2 class="text-base font-semibold text-white flex items-center gap-2 mb-5">
+            <span class="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-bold flex items-center justify-center">2</span>
+            畫面調色、運鏡與剪輯節奏
+          </h2>
+
+          <!-- 一鍵渡假調色濾鏡 -->
+          <div class="mb-5">
+            <label class="block text-xs font-medium text-zinc-300 mb-2.5">一鍵渡假調色濾鏡</label>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5" id="filterBtnGroup">
+              <button type="button" data-filter="none" class="filter-btn px-3 py-2.5 rounded-xl border text-xs font-medium transition bg-zinc-950/70 border-zinc-800 text-zinc-300 hover:border-zinc-700">
+                原色（無濾鏡）
+              </button>
+              <button type="button" data-filter="warm" class="filter-btn px-3 py-2.5 rounded-xl border text-xs font-medium transition bg-amber-500/15 border-amber-500 text-amber-200">
+                ☀️ 渡假暖陽
+              </button>
+              <button type="button" data-filter="food" class="filter-btn px-3 py-2.5 rounded-xl border text-xs font-medium transition bg-zinc-950/70 border-zinc-800 text-zinc-300 hover:border-zinc-700">
+                🍽️ 美食增色
+              </button>
+              <button type="button" data-filter="fresh" class="filter-btn px-3 py-2.5 rounded-xl border text-xs font-medium transition bg-zinc-950/70 border-zinc-800 text-zinc-300 hover:border-zinc-700">
+                🌊 清新透亮
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- 每段秒數 -->
+            <div class="bg-zinc-950/60 border border-zinc-800/80 rounded-xl p-3.5">
+              <div class="flex items-center justify-between mb-2">
+                <label for="clipDurationRange" class="text-xs font-medium text-zinc-300">每段秒數</label>
+                <div class="flex items-center gap-1">
+                  <input id="clipDurationNum" type="number" min="0.8" max="8" step="0.1" value="2.8" class="w-16 bg-zinc-900 border border-zinc-700 rounded-md px-2 py-0.5 text-xs text-right text-amber-300 font-semibold focus:outline-none focus:border-amber-500" />
+                  <span class="text-xs text-zinc-400">秒</span>
+                </div>
+              </div>
+              <input id="clipDurationRange" type="range" min="0.8" max="8" step="0.1" value="2.8" class="w-full accent-amber-500 cursor-pointer" />
+            </div>
+
+            <!-- 影片播放倍速 -->
+            <div class="bg-zinc-950/60 border border-zinc-800/80 rounded-xl p-3.5">
+              <div class="flex items-center justify-between mb-2">
+                <label for="playbackSpeedRange" class="text-xs font-medium text-zinc-300">影片播放倍速</label>
+                <span id="playbackSpeedVal" class="text-xs font-semibold text-amber-300">1.0x</span>
+              </div>
+              <input id="playbackSpeedRange" type="range" min="0.7" max="2.0" step="0.1" value="1.0" class="w-full accent-amber-500 cursor-pointer" />
+            </div>
+
+            <!-- 轉場模式 -->
+            <div class="bg-zinc-950/60 border border-zinc-800/80 rounded-xl p-3.5">
+              <label for="transitionSelect" class="block text-xs font-medium text-zinc-300 mb-2">片段轉場模式</label>
+              <select id="transitionSelect" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-500">
+                <option value="crossfade" selected>柔和淡入淡出（0.4 秒）</option>
+                <option value="cut">快節奏硬切（0 秒）</option>
+              </select>
+            </div>
+
+            <!-- 字卡樣式與位置 -->
+            <div class="bg-zinc-950/60 border border-zinc-800/80 rounded-xl p-3.5">
+              <label for="captionStyleSelect" class="block text-xs font-medium text-zinc-300 mb-2">畫面字卡樣式</label>
+              <select id="captionStyleSelect" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-500">
+                <option value="bottom" selected>中下方質感字（渡假推薦）</option>
+                <option value="center">正中央粗黑邊大字（吸睛）</option>
+              </select>
+            </div>
+
+            <!-- 照片自動推鏡模式 -->
+            <div class="bg-zinc-950/60 border border-zinc-800/80 rounded-xl p-3.5">
+              <label for="kenBurnsSelect" class="block text-xs font-medium text-zinc-300 mb-2">靜態照片運鏡（Ken Burns）</label>
+              <select id="kenBurnsSelect" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-500">
+                <option value="alternate" selected>交替運鏡（放大／縮小交錯）</option>
+                <option value="zoomIn">緩慢放大（推近）</option>
+                <option value="zoomOut">緩慢縮小（拉遠）</option>
+              </select>
+            </div>
+
+            <!-- 影片擷取位置 -->
+            <div class="bg-zinc-950/60 border border-zinc-800/80 rounded-xl p-3.5">
+              <label for="trimModeSelect" class="block text-xs font-medium text-zinc-300 mb-2">影片擷取位置</label>
+              <select id="trimModeSelect" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-500">
+                <option value="middle" selected>自動擷取中段精華</option>
+                <option value="start">從頭播放</option>
+              </select>
+            </div>
+
+            <!-- 輸出解析度 -->
+            <div class="sm:col-span-2 bg-zinc-950/60 border border-zinc-800/80 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <label for="resolutionSelect" class="block text-xs font-medium text-zinc-300">輸出解析度（9:16・30fps）</label>
+                <p class="text-[11px] text-zinc-500 mt-0.5">720p 渲染最快最順暢，1080p 適合高畫質發布</p>
+              </div>
+              <select id="resolutionSelect" class="sm:w-56 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-500">
+                <option value="720x1280" selected>720×1280（快速流暢）</option>
+                <option value="1080x1920">1080×1920（高畫質）</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. 背景音樂 (BGM) 與混音 -->
+        <section class="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-5 shadow-xl">
+          <div class="flex items-center justify-between gap-3 mb-4">
+            <h2 class="text-base font-semibold text-white flex items-center gap-2">
+              <span class="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-bold flex items-center justify-center">3</span>
+              背景音樂與音量混音
+            </h2>
+            <span class="text-xs text-zinc-500">支援 MP3、WAV、M4A</span>
+          </div>
+
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4">
+            <label for="bgmInput" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-sm font-medium text-zinc-100 cursor-pointer transition shrink-0">
+              <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+              </svg>
+              選擇背景音樂
+            </label>
+            <input id="bgmInput" type="file" accept="audio/*,.mp3,.wav,.m4a" class="hidden" />
+
+            <div class="flex-1 flex items-center justify-between gap-2 bg-zinc-950/70 border border-zinc-800 rounded-xl px-3.5 py-2.5 min-w-0">
+              <span id="bgmFileName" class="text-sm text-zinc-400 truncate">尚未選擇音樂（將僅保留原片聲音）</span>
+              <button id="removeBgmBtn" type="button" class="hidden text-xs px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-rose-950 text-zinc-300 hover:text-rose-300 transition shrink-0">
+                移除
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <div class="bg-zinc-950/60 border border-zinc-800/80 rounded-xl p-3.5">
+              <div class="flex items-center justify-between mb-2">
+                <label for="origVolRange" class="text-xs font-medium text-zinc-300">原片現場音量</label>
+                <span id="origVolVal" class="text-xs font-semibold text-amber-300">30%</span>
+              </div>
+              <input id="origVolRange" type="range" min="0" max="100" step="1" value="30" class="w-full accent-amber-500 cursor-pointer" />
+            </div>
+
+            <div class="bg-zinc-950/60 border border-zinc-800/80 rounded-xl p-3.5">
+              <div class="flex items-center justify-between mb-2">
+                <label for="bgmVolRange" class="text-xs font-medium text-zinc-300">背景音樂音量</label>
+                <span id="bgmVolVal" class="text-xs font-semibold text-amber-300">80%</span>
+              </div>
+              <input id="bgmVolRange" type="range" min="0" max="100" step="1" value="80" class="w-full accent-amber-500 cursor-pointer" />
+            </div>
+          </div>
+
+          <label class="flex items-center gap-2.5 cursor-pointer select-none bg-zinc-950/50 border border-zinc-800/70 rounded-xl px-3.5 py-2.5">
+            <input id="bgmFadeCheckbox" type="checkbox" checked class="w-4 h-4 rounded accent-amber-500 cursor-pointer" />
+            <span class="text-xs text-zinc-200 font-medium">BGM 開頭與結尾自動淡入淡出</span>
+            <span class="text-[11px] text-zinc-500 ml-auto hidden sm:inline">開頭淡入 1 秒・結尾淡出 1.5 秒</span>
+          </label>
+        </section>
+
+        <!-- 4. 品牌浮水印與結尾行動呼籲卡 (CTA) -->
+        <section class="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-5 shadow-xl">
+          <h2 class="text-base font-semibold text-white flex items-center gap-2 mb-4">
+            <span class="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-bold flex items-center justify-center">4</span>
+            品牌浮水印與結尾行動呼籲卡 (CTA)
+          </h2>
+
+          <!-- 旅行社 Logo 浮水印 -->
+          <div class="bg-zinc-950/60 border border-zinc-800/80 rounded-xl p-4 mb-4">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+              <div>
+                <p class="text-xs font-semibold text-zinc-200">旅行社 Logo 浮水印（右上角）</p>
+                <p class="text-[11px] text-zinc-500">建議使用去背 PNG 圖片，也會自動顯示在結尾卡中</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <label for="logoInput" class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-xs font-medium text-zinc-100 cursor-pointer transition">
+                  上傳 Logo
+                </label>
+                <input id="logoInput" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" class="hidden" />
+                <button id="removeLogoBtn" type="button" class="hidden px-2.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-rose-950 text-xs text-zinc-300 hover:text-rose-300 transition">
+                  移除
+                </button>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-4">
+              <div id="logoPreviewBox" class="w-12 h-12 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center overflow-hidden shrink-0">
+                <span class="text-[10px] text-zinc-600">無 Logo</span>
+              </div>
+              <div class="flex-1">
+                <div class="flex items-center justify-between mb-1.5">
+                  <label for="logoOpacityRange" class="text-xs text-zinc-400">浮水印透明度</label>
+                  <span id="logoOpacityVal" class="text-xs font-semibold text-amber-300">85%</span>
+                </div>
+                <input id="logoOpacityRange" type="range" min="15" max="100" step="5" value="85" class="w-full accent-amber-500 cursor-pointer" />
+              </div>
+            </div>
+          </div>
+
+          <!-- 結尾行動呼籲卡 (CTA) -->
+          <div class="bg-zinc-950/60 border border-zinc-800/80 rounded-xl p-4">
+            <label class="flex items-center justify-between gap-3 cursor-pointer select-none mb-3.5">
+              <div>
+                <p class="text-xs font-semibold text-zinc-200">結尾自動接「行動呼籲卡 (CTA)」</p>
+                <p class="text-[11px] text-zinc-500">片尾延長 2.2 秒，自動模糊最後一格畫面並浮現品牌資訊</p>
+              </div>
+              <input id="ctaToggle" type="checkbox" checked class="w-4 h-4 rounded accent-amber-500 cursor-pointer shrink-0" />
+            </label>
+
+            <div id="ctaFieldsContainer" class="space-y-3 pt-2 border-t border-zinc-800/80">
+              <div>
+                <label for="ctaTitleInput" class="block text-[11px] text-zinc-400 mb-1">主標題</label>
+                <input id="ctaTitleInput" type="text" value="想這樣放鬆渡假嗎？" class="w-full bg-zinc-900 border border-zinc-700 focus:border-amber-500 rounded-lg px-3 py-2 text-xs text-zinc-100 focus:outline-none" />
+              </div>
+              <div>
+                <label for="ctaSubtitleInput" class="block text-[11px] text-zinc-400 mb-1">副標題</label>
+                <input id="ctaSubtitleInput" type="text" value="私訊我們・客製你的專屬行程" class="w-full bg-zinc-900 border border-zinc-700 focus:border-amber-500 rounded-lg px-3 py-2 text-xs text-zinc-100 focus:outline-none" />
+              </div>
+              <div>
+                <label for="ctaBadgeInput" class="block text-[11px] text-zinc-400 mb-1">底部強調標籤</label>
+                <input id="ctaBadgeInput" type="text" value="✨ 立即預約・名額有限" class="w-full bg-zinc-900 border border-zinc-700 focus:border-amber-500 rounded-lg px-3 py-2 text-xs text-zinc-100 focus:outline-none" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- 右欄：固定 9:16 預覽監看螢幕與匯出區 -->
+      <div class="lg:col-span-5 lg:sticky lg:top-24 space-y-6">
+        <section class="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-5 shadow-xl">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-semibold text-white">9:16 即時監看螢幕</h2>
+            <span id="statusText" class="text-xs font-medium text-zinc-400 bg-zinc-950 border border-zinc-800 px-2.5 py-1 rounded-full">
+              準備就緒
+            </span>
+          </div>
+
+          <!-- 9:16 畫布 -->
+          <div class="w-full max-w-[300px] mx-auto aspect-[9/16] bg-black rounded-2xl overflow-hidden border border-zinc-800 shadow-2xl relative">
+            <canvas id="previewCanvas" width="720" height="1280" class="w-full h-full block object-contain"></canvas>
+            <!-- 狀態標籤 -->
+            <div id="recBadge" class="hidden absolute top-3 left-3 flex items-center gap-1.5 bg-black/75 backdrop-blur px-2.5 py-1 rounded-full border border-rose-500/40">
+              <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+              <span id="recBadgeText" class="text-[11px] font-semibold text-rose-300 tracking-wide">REC 錄製中</span>
+            </div>
+          </div>
+
+          <!-- 進度條 -->
+          <div class="mt-4">
+            <div class="flex items-center justify-between text-xs text-zinc-400 mb-1.5">
+              <span id="progressLabel" class="truncate pr-2">預估總長度：0.0 秒</span>
+              <span id="progressPercent" class="shrink-0 font-mono">0%</span>
+            </div>
+            <div class="w-full h-2 bg-zinc-950 rounded-full overflow-hidden border border-zinc-800">
+              <div id="progressBar" class="h-full w-0 bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-150"></div>
+            </div>
+          </div>
+
+          <!-- 控制按鈕群 -->
+          <div class="mt-5 space-y-2.5">
+            <div class="flex items-center gap-2.5">
+              <button id="previewOnlyBtn" type="button" class="flex-1 py-2.5 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed text-zinc-100 font-semibold text-xs sm:text-sm border border-zinc-700 transition flex items-center justify-center gap-1.5">
+                <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                僅預覽效果
+              </button>
+              <button id="stopRenderBtn" type="button" disabled class="py-2.5 px-4 rounded-xl bg-zinc-800 hover:bg-rose-600 disabled:opacity-40 disabled:hover:bg-zinc-800 disabled:cursor-not-allowed text-zinc-100 font-semibold text-xs sm:text-sm border border-zinc-700 transition">
+                停止
+              </button>
+            </div>
+            <button id="startExportBtn" type="button" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 disabled:opacity-40 disabled:cursor-not-allowed text-zinc-950 font-bold text-sm shadow-lg shadow-amber-500/20 transition flex items-center justify-center gap-2">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+              開始自動剪輯並匯出
+            </button>
+          </div>
+          <p class="text-[11px] text-zinc-500 mt-3 text-center">
+            匯出期間請保持分頁在前景開啟，以確保 30fps 畫質與轉場流暢。
+          </p>
+        </section>
+
+        <!-- 匯出成品播放與下載區 -->
+        <section id="resultSection" class="hidden bg-zinc-900/90 border border-emerald-500/35 rounded-2xl p-5 shadow-xl">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-semibold text-emerald-400 flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              剪輯完成！成品預覽
+            </h2>
+            <span id="resultFormatBadge" class="text-[11px] uppercase bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded-md font-mono">MP4</span>
+          </div>
+
+          <div class="w-full max-w-[300px] mx-auto aspect-[9/16] bg-black rounded-xl overflow-hidden border border-zinc-800 mb-4">
+            <video id="resultVideo" controls playsinline class="w-full h-full object-contain"></video>
+          </div>
+
+          <a id="downloadLink" href="#" download="travel_reel.mp4" class="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm shadow-lg shadow-emerald-600/20 transition flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            下載旅遊短影音
+          </a>
+        </section>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- 單一重複使用的隱藏媒體元素，確保 Web Audio API 只綁定一次不報錯 -->
+  <video id="renderVideo" class="hidden-media" playsinline crossorigin="anonymous"></video>
+  <audio id="renderBgm" class="hidden-media" loop crossorigin="anonymous"></audio>
+
+  <script>
+    (() => {
+      // 旅遊範例文案（景點標籤 + 畫面字卡）
+      const TRAVEL_SAMPLES = [
+        { location: '花蓮・海景渡假村', caption: '推開窗就是太平洋\n把煩惱全部交給大海' },
+        { location: '無邊際景觀泳池', caption: '怎麼拍都像在國外\n慢活渡假就該這樣' },
+        { location: '房內獨立湯屋', caption: '夜晚泡進暖呼呼美人湯\n徹底療癒身心' },
+        { location: '主廚一泊二食饗宴', caption: '在地鮮甜海味上桌\n每一口都是奢華享受' },
+        { location: '秘境海岸線漫步', caption: '給自己一場說走就走的旅行' },
+      ];
+
+      // 調色濾鏡 CSS Filter 定義
+      const FILTER_MAP = {
+        none: 'none',
+        warm: 'brightness(1.06) contrast(1.04) saturate(1.18) sepia(0.14)',
+        food: 'brightness(1.04) contrast(1.16) saturate(1.34)',
+        fresh: 'brightness(1.08) contrast(1.06) saturate(1.12) hue-rotate(-5deg)',
+      };
+
+      const CTA_DURATION_SEC = 2.2;
+      const CROSSFADE_SEC = 0.4;
+
+      // 應用程式狀態
+      const state = {
+        clips: [], // { id, type: 'video'|'image', file, url, thumbUrl, name, duration, img, location, caption }
+        bgm: null, // { file, url, name }
+        logo: null, // { url, img }
+        activeFilter: 'warm',
+        isRunning: false,
+        cancelRequested: false,
+        outputUrl: null,
+        audioCtx: null,
+        videoGain: null,
+        bgmGain: null,
+        audioDest: null,
+        mediaRecorder: null,
+        rafId: null,
+      };
+
+      // 離屏畫布：分別存放「前一段最後一格」與「當前畫面（已套用濾鏡、不含文字與浮水印）」
+      const prevFrameCanvas = document.createElement('canvas');
+      const prevFrameCtx = prevFrameCanvas.getContext('2d');
+      const currFrameCanvas = document.createElement('canvas');
+      const currFrameCtx = currFrameCanvas.getContext('2d');
+
+      // DOM 元素參照
+      const els = {
+        presetResortBtn: document.getElementById('presetResortBtn'),
+        presetFoodBtn: document.getElementById('presetFoodBtn'),
+        dropZone: document.getElementById('dropZone'),
+        mediaInput: document.getElementById('mediaInput'),
+        clipsList: document.getElementById('clipsList'),
+        emptyClipsHint: document.getElementById('emptyClipsHint'),
+        clipCountBadge: document.getElementById('clipCountBadge'),
+        applyTravelSampleBtn: document.getElementById('applyTravelSampleBtn'),
+        clearAllBtn: document.getElementById('clearAllBtn'),
+        filterBtns: document.querySelectorAll('.filter-btn'),
+        clipDurationRange: document.getElementById('clipDurationRange'),
+        clipDurationNum: document.getElementById('clipDurationNum'),
+        playbackSpeedRange: document.getElementById('playbackSpeedRange'),
+        playbackSpeedVal: document.getElementById('playbackSpeedVal'),
+        transitionSelect: document.getElementById('transitionSelect'),
+        captionStyleSelect: document.getElementById('captionStyleSelect'),
+        kenBurnsSelect: document.getElementById('kenBurnsSelect'),
+        trimModeSelect: document.getElementById('trimModeSelect'),
+        resolutionSelect: document.getElementById('resolutionSelect'),
+        bgmInput: document.getElementById('bgmInput'),
+        bgmFileName: document.getElementById('bgmFileName'),
+        removeBgmBtn: document.getElementById('removeBgmBtn'),
+        origVolRange: document.getElementById('origVolRange'),
+        origVolVal: document.getElementById('origVolVal'),
+        bgmVolRange: document.getElementById('bgmVolRange'),
+        bgmVolVal: document.getElementById('bgmVolVal'),
+        bgmFadeCheckbox: document.getElementById('bgmFadeCheckbox'),
+        logoInput: document.getElementById('logoInput'),
+        removeLogoBtn: document.getElementById('removeLogoBtn'),
+        logoPreviewBox: document.getElementById('logoPreviewBox'),
+        logoOpacityRange: document.getElementById('logoOpacityRange'),
+        logoOpacityVal: document.getElementById('logoOpacityVal'),
+        ctaToggle: document.getElementById('ctaToggle'),
+        ctaFieldsContainer: document.getElementById('ctaFieldsContainer'),
+        ctaTitleInput: document.getElementById('ctaTitleInput'),
+        ctaSubtitleInput: document.getElementById('ctaSubtitleInput'),
+        ctaBadgeInput: document.getElementById('ctaBadgeInput'),
+        previewCanvas: document.getElementById('previewCanvas'),
+        statusText: document.getElementById('statusText'),
+        recBadge: document.getElementById('recBadge'),
+        recBadgeText: document.getElementById('recBadgeText'),
+        progressLabel: document.getElementById('progressLabel'),
+        progressPercent: document.getElementById('progressPercent'),
+        progressBar: document.getElementById('progressBar'),
+        previewOnlyBtn: document.getElementById('previewOnlyBtn'),
+        startExportBtn: document.getElementById('startExportBtn'),
+        stopRenderBtn: document.getElementById('stopRenderBtn'),
+        resultSection: document.getElementById('resultSection'),
+        resultVideo: document.getElementById('resultVideo'),
+        resultFormatBadge: document.getElementById('resultFormatBadge'),
+        downloadLink: document.getElementById('downloadLink'),
+        renderVideo: document.getElementById('renderVideo'),
+        renderBgm: document.getElementById('renderBgm'),
+        toastContainer: document.getElementById('toastContainer'),
+      };
+
+      const ctx = els.previewCanvas.getContext('2d');
+
+      // 顯示非阻塞式通知
+      function showToast(message, type = 'info') {
+        const colors = {
+          info: 'bg-zinc-900 border-zinc-700 text-zinc-100',
+          success: 'bg-emerald-950/90 border-emerald-700/70 text-emerald-200',
+          error: 'bg-rose-950/90 border-rose-700/70 text-rose-200',
+        };
+        const toast = document.createElement('div');
+        toast.className = `pointer-events-auto px-4 py-3 rounded-xl border text-sm shadow-xl backdrop-blur transition-all duration-300 ${colors[type] || colors.info}`;
+        toast.textContent = message;
+        els.toastContainer.appendChild(toast);
+        setTimeout(() => {
+          toast.classList.add('opacity-0', 'translate-y-2');
+          setTimeout(() => toast.remove(), 300);
+        }, 3200);
+      }
+
+      // 相容各瀏覽器的圓角矩形路徑輔助函式
+      function drawRoundedRectPath(targetCtx, x, y, w, h, r) {
+        const radius = Math.min(r, w / 2, h / 2);
+        targetCtx.beginPath();
+        targetCtx.moveTo(x + radius, y);
+        targetCtx.arcTo(x + w, y, x + w, y + h, radius);
+        targetCtx.arcTo(x + w, y + h, x, y + h, radius);
+        targetCtx.arcTo(x, y + h, x, y, radius);
+        targetCtx.arcTo(x, y, x + w, y, radius);
+        targetCtx.closePath();
+      }
+
+      // 緩動函式
+      function easeInOutQuad(t) {
+        return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      }
+      function easeOutCubic(t) {
+        return 1 - Math.pow(1 - t, 3);
+      }
+
+      // 取得目前所有設定
+      function getSettings() {
+        const [width, height] = els.resolutionSelect.value.split('x').map(Number);
+        return {
+          clipDuration: Math.max(0.8, Math.min(8, parseFloat(els.clipDurationNum.value) || 2.8)),
+          speed: parseFloat(els.playbackSpeedRange.value) || 1.0,
+          transition: els.transitionSelect.value,
+          captionStyle: els.captionStyleSelect.value,
+          kenBurns: els.kenBurnsSelect.value,
+          trimMode: els.trimModeSelect.value,
+          filterKey: state.activeFilter,
+          filterCss: FILTER_MAP[state.activeFilter] || 'none',
+          width,
+          height,
+          origVol: (parseInt(els.origVolRange.value, 10) || 0) / 100,
+          bgmVol: (parseInt(els.bgmVolRange.value, 10) || 0) / 100,
+          bgmFade: els.bgmFadeCheckbox.checked,
+          logoOpacity: (parseInt(els.logoOpacityRange.value, 10) || 85) / 100,
+          ctaEnabled: els.ctaToggle.checked,
+          ctaTitle: els.ctaTitleInput.value.trim() || '想這樣放鬆渡假嗎？',
+          ctaSubtitle: els.ctaSubtitleInput.value.trim() || '私訊我們・客製你的專屬行程',
+          ctaBadge: els.ctaBadgeInput.value.trim() || '✨ 立即預約・名額有限',
+        };
+      }
+
+      // 同步所有 Canvas 尺寸
+      function syncCanvasSize(width, height) {
+        if (els.previewCanvas.width !== width || els.previewCanvas.height !== height) {
+          els.previewCanvas.width = width;
+          els.previewCanvas.height = height;
+        }
+        if (prevFrameCanvas.width !== width || prevFrameCanvas.height !== height) {
+          prevFrameCanvas.width = width;
+          prevFrameCanvas.height = height;
+        }
+        if (currFrameCanvas.width !== width || currFrameCanvas.height !== height) {
+          currFrameCanvas.width = width;
+          currFrameCanvas.height = height;
+        }
+      }
+
+      // 讀取影片長度並擷取縮圖
+      function probeVideoInfo(url) {
+        return new Promise((resolve) => {
+          const v = document.createElement('video');
+          v.preload = 'metadata';
+          v.muted = true;
+          v.playsInline = true;
+          let resolved = false;
+
+          const finish = (duration, thumbUrl) => {
+            if (resolved) return;
+            resolved = true;
+            v.src = '';
+            resolve({ duration, thumbUrl });
+          };
+
+          v.onloadedmetadata = () => {
+            const dur = Number.isFinite(v.duration) ? v.duration : 0;
+            const seekTo = dur > 0.6 ? Math.min(dur * 0.25, 1.0) : 0;
+            v.onseeked = () => {
+              try {
+                const c = document.createElement('canvas');
+                c.width = 160;
+                c.height = 160;
+                const cctx = c.getContext('2d');
+                const vw = v.videoWidth || 160;
+                const vh = v.videoHeight || 160;
+                const s = Math.min(vw, vh);
+                cctx.drawImage(v, (vw - s) / 2, (vh - s) / 2, s, s, 0, 0, 160, 160);
+                finish(dur, c.toDataURL('image/jpeg', 0.7));
+              } catch {
+                finish(dur, '');
+              }
+            };
+            v.onerror = () => finish(dur, '');
+            try {
+              v.currentTime = seekTo;
+            } catch {
+              finish(dur, '');
+            }
+          };
+          v.onerror = () => finish(0, '');
+          setTimeout(() => finish(0, ''), 3500);
+          v.src = url;
+        });
+      }
+
+      // 載入圖片物件
+      function loadImage(url) {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = () => reject(new Error('圖片載入失敗'));
+          img.src = url;
+        });
+      }
+
+      // 計算預估總長度
+      function estimateTotalSeconds(settings) {
+        let total = 0;
+        for (const clip of state.clips) {
+          if (clip.type === 'image') {
+            total += settings.clipDuration;
+          } else {
+            const rawNeed = settings.clipDuration * settings.speed;
+            const rawDur = clip.duration > 0 ? clip.duration : rawNeed;
+            const usableRaw = Math.max(0.4, Math.min(rawDur, rawNeed));
+            total += usableRaw / settings.speed;
+          }
+        }
+        if (state.clips.length > 0 && settings.ctaEnabled) {
+          total += CTA_DURATION_SEC;
+        }
+        return total;
+      }
+
+      function updateEstimateText() {
+        if (state.isRunning) return;
+        const settings = getSettings();
+        const total = estimateTotalSeconds(settings);
+        const ctaText = settings.ctaEnabled && state.clips.length > 0 ? '（含片尾卡）' : '';
+        els.progressLabel.textContent = `預估總長度：${total.toFixed(1)} 秒${ctaText}`;
+        els.progressPercent.textContent = '0%';
+        els.progressBar.style.width = '0%';
+      }
+
+      // 繪製覆蓋式畫面（支援縮放係數以實現 Ken Burns 運鏡）
+      function drawSourceCover(targetCtx, source, swSrc, shSrc, zoomScale = 1.0, filterCss = 'none') {
+        if (!swSrc || !shSrc) return;
+        const cw = targetCtx.canvas.width;
+        const ch = targetCtx.canvas.height;
+        const sRatio = swSrc / shSrc;
+        const cRatio = cw / ch;
+
+        let baseSw = swSrc;
+        let baseSh = shSrc;
+        if (sRatio > cRatio) {
+          baseSw = shSrc * cRatio;
+        } else {
+          baseSh = swSrc / cRatio;
+        }
+
+        const cropW = baseSw / zoomScale;
+        const cropH = baseSh / zoomScale;
+        const sx = (swSrc - cropW) / 2;
+        const sy = (shSrc - cropH) / 2;
+
+        targetCtx.save();
+        targetCtx.filter = filterCss || 'none';
+        targetCtx.drawImage(source, sx, sy, cropW, cropH, 0, 0, cw, ch);
+        targetCtx.restore();
+      }
+
+      // 繪製左上角景點膠囊標籤
+      function drawLocationPill(locationText, alpha = 1) {
+        const text = (locationText || '').trim();
+        if (!text) return;
+
+        const cw = els.previewCanvas.width;
+        const ch = els.previewCanvas.height;
+        const scale = cw / 1080;
+        const fontSize = Math.round(34 * scale);
+        const padX = Math.round(28 * scale);
+        const padY = Math.round(16 * scale);
+        const marginX = Math.round(44 * scale);
+        const marginY = Math.round(64 * scale);
+        const label = `📍 ${text}`;
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.font = `600 ${fontSize}px "Noto Sans TC", "PingFang TC", sans-serif`;
+        const metrics = ctx.measureText(label);
+        const boxW = Math.min(cw - marginX * 2, metrics.width + padX * 2);
+        const boxH = fontSize + padY * 2;
+
+        drawRoundedRectPath(ctx, marginX, marginY, boxW, boxH, boxH / 2);
+        ctx.fillStyle = 'rgba(15, 15, 18, 0.56)';
+        ctx.fill();
+        ctx.lineWidth = Math.max(1.5, 2 * scale);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, marginX + padX, marginY + boxH / 2 + 1 * scale, boxW - padX * 2);
+        ctx.restore();
+      }
+
+      // 繪製右上角品牌 Logo 浮水印
+      function drawBrandWatermark(logoOpacity) {
+        if (!state.logo || !state.logo.img) return;
+        const img = state.logo.img;
+        const cw = els.previewCanvas.width;
+        const ch = els.previewCanvas.height;
+        const scale = cw / 1080;
+        const maxW = 200 * scale;
+        const maxH = 110 * scale;
+        const ratio = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight, 1);
+        const drawW = img.naturalWidth * ratio;
+        const drawH = img.naturalHeight * ratio;
+        const x = cw - drawW - 44 * scale;
+        const y = 58 * scale;
+
+        ctx.save();
+        ctx.globalAlpha = logoOpacity;
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
+        ctx.shadowBlur = 10 * scale;
+        ctx.drawImage(img, x, y, drawW, drawH);
+        ctx.restore();
+      }
+
+      // 繪製畫面字卡（支援「中下方質感字」與「正中央大字」）
+      function drawCaption(text, styleMode, alpha = 1) {
+        const trimmed = (text || '').trim();
+        if (!trimmed) return;
+        const lines = trimmed.split('\n').map((l) => l.trim()).filter(Boolean).slice(0, 3);
+        if (!lines.length) return;
+
+        const cw = els.previewCanvas.width;
+        const ch = els.previewCanvas.height;
+        const scale = cw / 1080;
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        if (styleMode === 'bottom') {
+          // 中下方質感字：底部柔光漸層襯底 + 俐落白字與柔和陰影
+          const grad = ctx.createLinearGradient(0, ch * 0.62, 0, ch);
+          grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+          grad.addColorStop(1, 'rgba(0, 0, 0, 0.62)');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, ch * 0.62, cw, ch * 0.38);
+
+          const fs = Math.round(54 * scale);
+          const lh = Math.round(fs * 1.42);
+          ctx.font = `700 ${fs}px "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif`;
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.72)';
+          ctx.shadowBlur = 16 * scale;
+          ctx.shadowOffsetY = 3 * scale;
+          ctx.fillStyle = '#ffffff';
+
+          const baseY = ch * 0.78 - ((lines.length - 1) * lh) / 2;
+          lines.forEach((line, idx) => {
+            ctx.fillText(line, cw / 2, baseY + idx * lh, cw * 0.86);
+          });
+        } else {
+          // 正中央大字：粗黑邊白字（吸睛快剪風）
+          const fs = Math.round(68 * scale);
+          const lh = Math.round(fs * 1.32);
+          ctx.font = `900 ${fs}px "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif`;
+          ctx.lineJoin = 'round';
+          ctx.miterLimit = 2;
+          ctx.lineWidth = Math.max(5, Math.round(fs * 0.16));
+          ctx.strokeStyle = '#000000';
+          ctx.fillStyle = '#ffffff';
+
+          const baseY = ch * 0.5 - ((lines.length - 1) * lh) / 2;
+          lines.forEach((line, idx) => {
+            const y = baseY + idx * lh;
+            ctx.strokeText(line, cw / 2, y, cw * 0.88);
+            ctx.fillText(line, cw / 2, y, cw * 0.88);
+          });
+        }
+        ctx.restore();
+      }
+
+      // 繪製結尾行動呼籲卡 (CTA)
+      function drawOutroCtaFrame(progress, settings) {
+        const cw = els.previewCanvas.width;
+        const ch = els.previewCanvas.height;
+        const scale = cw / 1080;
+
+        // 1. 將最後一格畫面放大微裁並套用高斯模糊與暗化
+        ctx.save();
+        ctx.fillStyle = '#09090b';
+        ctx.fillRect(0, 0, cw, ch);
+        ctx.filter = `blur(${Math.round(22 * scale)}px) brightness(0.45)`;
+        const bleed = 1.1;
+        const bw = cw * bleed;
+        const bh = ch * bleed;
+        ctx.drawImage(prevFrameCanvas, (cw - bw) / 2, (ch - bh) / 2, bw, bh);
+        ctx.restore();
+
+        // 2. 柔順浮現動畫（前 0.55 秒淡入上移）
+        const animT = easeOutCubic(Math.min(1, progress / 0.28));
+        const offsetY = (1 - animT) * 32 * scale;
+
+        ctx.save();
+        ctx.globalAlpha = animT;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        let cursorY = ch * 0.43 + offsetY;
+
+        // 若有上傳品牌 Logo，置中顯示於標題上方
+        if (state.logo && state.logo.img) {
+          const img = state.logo.img;
+          const maxW = 260 * scale;
+          const maxH = 140 * scale;
+          const ratio = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight, 1);
+          const dw = img.naturalWidth * ratio;
+          const dh = img.naturalHeight * ratio;
+          ctx.drawImage(img, (cw - dw) / 2, cursorY - dh - 48 * scale, dw, dh);
+        }
+
+        // 主標題
+        const titleFs = Math.round(64 * scale);
+        ctx.font = `900 ${titleFs}px "Noto Sans TC", "PingFang TC", sans-serif`;
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+        ctx.shadowBlur = 18 * scale;
+        ctx.fillText(settings.ctaTitle, cw / 2, cursorY, cw * 0.86);
+
+        // 副標題
+        const subFs = Math.round(38 * scale);
+        ctx.font = `500 ${subFs}px "Noto Sans TC", "PingFang TC", sans-serif`;
+        ctx.fillStyle = 'rgba(244, 244, 245, 0.92)';
+        ctx.fillText(settings.ctaSubtitle, cw / 2, cursorY + 86 * scale, cw * 0.86);
+
+        // 底部強調標籤膠囊
+        const badgeFs = Math.round(36 * scale);
+        ctx.font = `700 ${badgeFs}px "Noto Sans TC", "PingFang TC", sans-serif`;
+        const bText = settings.ctaBadge;
+        const bMetrics = ctx.measureText(bText);
+        const padX = 48 * scale;
+        const padY = 22 * scale;
+        const bW = Math.min(cw * 0.84, bMetrics.width + padX * 2);
+        const bH = badgeFs + padY * 2;
+        const bX = (cw - bW) / 2;
+        const bY = cursorY + 175 * scale;
+
+        ctx.shadowColor = 'rgba(245, 158, 11, 0.35)';
+        ctx.shadowBlur = 24 * scale;
+        const pillGrad = ctx.createLinearGradient(bX, bY, bX + bW, bY);
+        pillGrad.addColorStop(0, '#f59e0b');
+        pillGrad.addColorStop(1, '#ea580c');
+        drawRoundedRectPath(ctx, bX, bY, bW, bH, bH / 2);
+        ctx.fillStyle = pillGrad;
+        ctx.fill();
+
+        ctx.shadowColor = 'transparent';
+        ctx.fillStyle = '#18181b';
+        ctx.fillText(bText, cw / 2, bY + bH / 2 + 1 * scale, bW - padX);
+
+        ctx.restore();
+      }
+
+      // 繪製待機靜態預覽畫面（方便即時檢視濾鏡、景點標籤、字卡與 Logo 效果）
+      function drawIdleCanvas() {
+        const settings = getSettings();
+        syncCanvasSize(settings.width, settings.height);
+
+        const cw = els.previewCanvas.width;
+        const ch = els.previewCanvas.height;
+
+        // 若第一筆是靜態照片，直接繪製該照片讓使用者即時看濾鏡效果
+        if (state.clips.length > 0 && state.clips[0].type === 'image' && state.clips[0].img) {
+          const img = state.clips[0].img;
+          drawSourceCover(ctx, img, img.naturalWidth, img.naturalHeight, 1.0, settings.filterCss);
+        } else {
+          const grad = ctx.createLinearGradient(0, 0, 0, ch);
+          grad.addColorStop(0, '#1f1f23');
+          grad.addColorStop(1, '#09090b');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, cw, ch);
+        }
+
+        const firstClip = state.clips[0];
+        if (firstClip) {
+          drawLocationPill(firstClip.location, 1);
+          drawCaption(
+            firstClip.caption || `已載入 ${state.clips.length} 筆素材\n點擊「僅預覽效果」或「開始匯出」`,
+            settings.captionStyle,
+            1
+          );
+        } else {
+          drawLocationPill('花蓮・海景渡假村', 1);
+          drawCaption('9:16 旅遊短影音預覽\n拖曳影片與照片即可開始', settings.captionStyle, 1);
+        }
+
+        drawBrandWatermark(settings.logoOpacity);
+      }
+
+      // 渲染左側素材清單 UI
+      function renderClipsList() {
+        els.clipCountBadge.textContent = `${state.clips.length} 筆`;
+        els.emptyClipsHint.classList.toggle('hidden', state.clips.length > 0);
+        els.clipsList.innerHTML = '';
+
+        state.clips.forEach((clip, idx) => {
+          const item = document.createElement('div');
+          item.className = 'bg-zinc-950/80 border border-zinc-800 rounded-xl p-3.5 transition hover:border-zinc-700';
+
+          const isPhoto = clip.type === 'image';
+          const badgeClass = isPhoto
+            ? 'bg-sky-500/15 text-sky-300 border-sky-500/30'
+            : 'bg-violet-500/15 text-violet-300 border-violet-500/30';
+          const typeLabel = isPhoto ? '照片' : '影片';
+          const metaInfo = isPhoto
+            ? '自動套用推鏡運鏡'
+            : `原始長度：${clip.duration > 0 ? clip.duration.toFixed(1) + ' 秒' : '影片'}`;
+
+          const thumbHtml = clip.thumbUrl
+            ? `<img src="${clip.thumbUrl}" alt="" class="w-12 h-12 rounded-lg object-cover border border-zinc-800 shrink-0 bg-zinc-900" />`
+            : `<div class="w-12 h-12 rounded-lg border border-zinc-800 shrink-0 bg-zinc-900 flex items-center justify-center text-xs text-zinc-500">${typeLabel}</div>`;
+
+          item.innerHTML = `
+            <div class="flex items-start gap-3 mb-3">
+              ${thumbHtml}
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-0.5">
+                  <span class="text-xs font-bold text-amber-400">#${idx + 1}</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded border font-semibold ${badgeClass}">${typeLabel}</span>
+                  <p class="text-xs font-medium text-zinc-100 truncate" title="${clip.name}">${clip.name}</p>
+                </div>
+                <p class="text-[11px] text-zinc-500">${metaInfo}</p>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                <button type="button" data-action="up" data-idx="${idx}" ${idx === 0 ? 'disabled' : ''} class="p-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 disabled:opacity-30 text-zinc-300 border border-zinc-800 transition" title="上移">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" /></svg>
+                </button>
+                <button type="button" data-action="down" data-idx="${idx}" ${idx === state.clips.length - 1 ? 'disabled' : ''} class="p-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 disabled:opacity-30 text-zinc-300 border border-zinc-800 transition" title="下移">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                </button>
+                <button type="button" data-action="delete" data-idx="${idx}" class="p-1.5 rounded-lg bg-zinc-900 hover:bg-rose-950/80 text-zinc-400 hover:text-rose-300 border border-zinc-800 transition" title="刪除">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
+              <div class="sm:col-span-5">
+                <input type="text" data-field="location" data-idx="${idx}" value="${clip.location.replace(/"/g, '&quot;')}" placeholder="📍 景點標籤（如：花蓮・海景房）" class="w-full bg-zinc-900/90 border border-zinc-800 focus:border-amber-500 rounded-lg px-2.5 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none" />
+              </div>
+              <div class="sm:col-span-7">
+                <textarea rows="2" data-field="caption" data-idx="${idx}" placeholder="畫面字卡（可換行，留空不顯示）" class="w-full bg-zinc-900/90 border border-zinc-800 focus:border-amber-500 rounded-lg px-2.5 py-1.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none resize-none leading-relaxed">${clip.caption}</textarea>
+              </div>
+            </div>
+          `;
+
+          els.clipsList.appendChild(item);
+        });
+
+        updateEstimateText();
+        if (!state.isRunning) drawIdleCanvas();
+      }
+
+      // 加入多筆影片與照片
+      async function addMediaFiles(fileList) {
+        const files = Array.from(fileList);
+        let addedCount = 0;
+
+        for (const file of files) {
+          const isVideo = file.type.startsWith('video/') || /\.(mp4|mov|webm)$/i.test(file.name);
+          const isImage = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp)$/i.test(file.name);
+          if (!isVideo && !isImage) continue;
+
+          const url = URL.createObjectURL(file);
+          if (isImage) {
+            try {
+              const img = await loadImage(url);
+              state.clips.push({
+                id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+                type: 'image',
+                file,
+                url,
+                thumbUrl: url,
+                name: file.name,
+                duration: 0,
+                img,
+                location: '',
+                caption: '',
+              });
+              addedCount++;
+            } catch {
+              URL.revokeObjectURL(url);
+            }
+          } else {
+            const { duration, thumbUrl } = await probeVideoInfo(url);
+            state.clips.push({
+              id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+              type: 'video',
+              file,
+              url,
+              thumbUrl,
+              name: file.name,
+              duration,
+              img: null,
+              location: '',
+              caption: '',
+            });
+            addedCount++;
+          }
+        }
+
+        if (addedCount > 0) {
+          renderClipsList();
+          showToast(`已新增 ${addedCount} 筆素材`, 'success');
+        } else {
+          showToast('請選擇 MP4/MOV/WebM 影片或 JPG/PNG/WebP 照片', 'error');
+        }
+      }
+
+      // 初始化並重用單一 Web Audio API 混音架構
+      function ensureAudioGraph() {
+        if (!state.audioCtx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          state.audioCtx = new AudioCtx();
+          state.audioDest = state.audioCtx.createMediaStreamDestination();
+
+          // 全場只呼叫一次 createMediaElementSource，後續切換影片重用 els.renderVideo
+          const videoSource = state.audioCtx.createMediaElementSource(els.renderVideo);
+          state.videoGain = state.audioCtx.createGain();
+          videoSource.connect(state.videoGain);
+          state.videoGain.connect(state.audioDest);
+          state.videoGain.connect(state.audioCtx.destination);
+
+          const bgmSource = state.audioCtx.createMediaElementSource(els.renderBgm);
+          state.bgmGain = state.audioCtx.createGain();
+          bgmSource.connect(state.bgmGain);
+          state.bgmGain.connect(state.audioDest);
+          state.bgmGain.connect(state.audioCtx.destination);
+        }
+        if (state.audioCtx.state === 'suspended') {
+          return state.audioCtx.resume();
+        }
+        return Promise.resolve();
+      }
+
+      // 偵測最佳 MediaRecorder 格式（優先 MP4，否則 WebM）
+      function detectBestMimeType() {
+        const candidates = [
+          { mime: 'video/mp4;codecs=avc1.42E01E,mp4a.40.2', ext: 'mp4' },
+          { mime: 'video/mp4', ext: 'mp4' },
+          { mime: 'video/webm;codecs=vp9,opus', ext: 'webm' },
+          { mime: 'video/webm;codecs=vp8,opus', ext: 'webm' },
+          { mime: 'video/webm', ext: 'webm' },
+        ];
+        for (const c of candidates) {
+          if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(c.mime)) {
+            return c;
+          }
+        }
+        return { mime: '', ext: 'webm' };
+      }
+
+      // 準備單段影片（重用單一 <video> 元素）
+      function prepareVideoClip(clip, settings) {
+        return new Promise((resolve, reject) => {
+          const video = els.renderVideo;
+          const cleanup = () => {
+            video.onloadedmetadata = null;
+            video.onseeked = null;
+            video.onerror = null;
+          };
+
+          video.onerror = () => {
+            cleanup();
+            reject(new Error(`無法讀取影片：${clip.name}`));
+          };
+
+          video.onloadedmetadata = () => {
+            const rawDur = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : clip.duration;
+            const rawNeed = settings.clipDuration * settings.speed;
+            let startTime = 0;
+
+            if (rawDur > rawNeed && settings.trimMode === 'middle') {
+              startTime = (rawDur - rawNeed) / 2;
+            }
+
+            const playableRaw = Math.max(0.4, Math.min(rawDur - startTime, rawNeed));
+            const targetRealMs = (playableRaw / settings.speed) * 1000;
+
+            video.onseeked = () => {
+              cleanup();
+              resolve({ targetRealMs });
+            };
+
+            if (Math.abs(video.currentTime - startTime) < 0.02) {
+              cleanup();
+              resolve({ targetRealMs });
+            } else {
+              video.currentTime = startTime;
+            }
+          };
+
+          video.src = clip.url;
+          video.load();
+        });
+      }
+
+      // 將當前畫面與前一段最後一格進行交叉淡化合成，並疊加文字與 Logo
+      function compositeFrame(clip, elapsedMs, hasPrevFrame, settings) {
+        const cw = els.previewCanvas.width;
+        const ch = els.previewCanvas.height;
+        const fadeMs = settings.transition === 'crossfade' && hasPrevFrame ? CROSSFADE_SEC * 1000 : 0;
+
+        ctx.clearRect(0, 0, cw, ch);
+
+        if (fadeMs > 0 && elapsedMs < fadeMs) {
+          const t = easeInOutQuad(elapsedMs / fadeMs);
+          ctx.drawImage(prevFrameCanvas, 0, 0);
+          ctx.save();
+          ctx.globalAlpha = t;
+          ctx.drawImage(currFrameCanvas, 0, 0);
+          ctx.restore();
+        } else {
+          ctx.drawImage(currFrameCanvas, 0, 0);
+        }
+
+        // 文字與標籤微淡入（0.25 秒），視覺更柔和
+        const textAlpha = Math.min(1, elapsedMs / 250);
+        drawLocationPill(clip.location, textAlpha);
+        drawCaption(clip.caption, settings.captionStyle, textAlpha);
+        drawBrandWatermark(settings.logoOpacity);
+      }
+
+      // 播放並繪製單段影片
+      function renderVideoClip(clip, targetRealMs, hasPrevFrame, settings, baseTimeMs, totalTimeMs) {
+        return new Promise(async (resolve, reject) => {
+          const video = els.renderVideo;
+          video.playbackRate = settings.speed;
+
+          try {
+            await video.play();
+          } catch (err) {
+            reject(err);
+            return;
+          }
+
+          const startPerf = performance.now();
+
+          const step = () => {
+            if (state.cancelRequested) {
+              video.pause();
+              resolve();
+              return;
+            }
+
+            const elapsed = performance.now() - startPerf;
+            drawSourceCover(currFrameCtx, video, video.videoWidth, video.videoHeight, 1.0, settings.filterCss);
+            compositeFrame(clip, elapsed, hasPrevFrame, settings);
+
+            const pct = Math.min(100, Math.round(((baseTimeMs + elapsed) / totalTimeMs) * 100));
+            els.progressBar.style.width = `${pct}%`;
+            els.progressPercent.textContent = `${pct}%`;
+
+            if (elapsed >= targetRealMs || video.ended) {
+              video.pause();
+              // 儲存此段最後一格（不含文字與浮水印）供下一段轉場或 CTA 模糊背景使用
+              prevFrameCtx.drawImage(currFrameCanvas, 0, 0);
+              resolve();
+              return;
+            }
+
+            state.rafId = requestAnimationFrame(step);
+          };
+
+          state.rafId = requestAnimationFrame(step);
+        });
+      }
+
+      // 繪製單張靜態照片（含 Ken Burns 自動推鏡）
+      function renderPhotoClip(clip, photoIndex, hasPrevFrame, settings, baseTimeMs, totalTimeMs) {
+        return new Promise((resolve) => {
+          els.renderVideo.pause();
+          const targetRealMs = settings.clipDuration * 1000;
+          const img = clip.img;
+
+          let zoomStart = 1.0;
+          let zoomEnd = 1.12;
+          if (settings.kenBurns === 'zoomOut' || (settings.kenBurns === 'alternate' && photoIndex % 2 === 1)) {
+            zoomStart = 1.12;
+            zoomEnd = 1.0;
+          }
+
+          const startPerf = performance.now();
+
+          const step = () => {
+            if (state.cancelRequested) {
+              resolve();
+              return;
+            }
+
+            const elapsed = performance.now() - startPerf;
+            const progress = Math.min(1, elapsed / targetRealMs);
+            const currentZoom = zoomStart + (zoomEnd - zoomStart) * progress;
+
+            drawSourceCover(currFrameCtx, img, img.naturalWidth, img.naturalHeight, currentZoom, settings.filterCss);
+            compositeFrame(clip, elapsed, hasPrevFrame, settings);
+
+            const pct = Math.min(100, Math.round(((baseTimeMs + elapsed) / totalTimeMs) * 100));
+            els.progressBar.style.width = `${pct}%`;
+            els.progressPercent.textContent = `${pct}%`;
+
+            if (elapsed >= targetRealMs) {
+              prevFrameCtx.drawImage(currFrameCanvas, 0, 0);
+              resolve();
+              return;
+            }
+
+            state.rafId = requestAnimationFrame(step);
+          };
+
+          state.rafId = requestAnimationFrame(step);
+        });
+      }
+
+      // 繪製結尾行動呼籲卡 (CTA, 2.2 秒)
+      function renderOutroCta(settings, baseTimeMs, totalTimeMs) {
+        return new Promise((resolve) => {
+          els.renderVideo.pause();
+          const durationMs = CTA_DURATION_SEC * 1000;
+          const startPerf = performance.now();
+
+          const step = () => {
+            if (state.cancelRequested) {
+              resolve();
+              return;
+            }
+
+            const elapsed = performance.now() - startPerf;
+            const progress = Math.min(1, elapsed / durationMs);
+            drawOutroCtaFrame(progress, settings);
+
+            const pct = Math.min(100, Math.round(((baseTimeMs + elapsed) / totalTimeMs) * 100));
+            els.progressBar.style.width = `${pct}%`;
+            els.progressPercent.textContent = `${pct}%`;
+
+            if (elapsed >= durationMs) {
+              resolve();
+              return;
+            }
+
+            state.rafId = requestAnimationFrame(step);
+          };
+
+          state.rafId = requestAnimationFrame(step);
+        });
+      }
+
+      // 切換介面執行中狀態
+      function setRunningUI(active, isRecording) {
+        state.isRunning = active;
+        els.previewOnlyBtn.disabled = active;
+        els.startExportBtn.disabled = active;
+        els.stopRenderBtn.disabled = !active;
+        els.recBadge.classList.toggle('hidden', !active);
+        if (active) {
+          els.recBadgeText.textContent = isRecording ? 'REC 剪輯錄製中' : 'PREVIEW 預覽播放中';
+        } else {
+          els.statusText.textContent = '準備就緒';
+        }
+      }
+
+      // 主流程：執行預覽或自動剪輯匯出
+      async function runTimeline({ record }) {
+        if (!state.clips.length) {
+          showToast('請先加入至少一筆影片或照片素材', 'error');
+          return;
+        }
+        if (record && typeof MediaRecorder === 'undefined') {
+          showToast('您的瀏覽器不支援 MediaRecorder 錄影功能', 'error');
+          return;
+        }
+
+        const settings = getSettings();
+        syncCanvasSize(settings.width, settings.height);
+
+        const totalSec = estimateTotalSeconds(settings);
+        const totalMs = Math.max(500, totalSec * 1000);
+
+        state.cancelRequested = false;
+        setRunningUI(true, record);
+        if (record) els.resultSection.classList.add('hidden');
+
+        try {
+          await ensureAudioGraph();
+          const now = state.audioCtx.currentTime;
+
+          // 設定原片音量
+          state.videoGain.gain.cancelScheduledValues(now);
+          state.videoGain.gain.setValueAtTime(settings.origVol, now);
+
+          // 設定 BGM 音量與開頭淡入／結尾淡出
+          state.bgmGain.gain.cancelScheduledValues(now);
+          if (state.bgm) {
+            els.renderBgm.src = state.bgm.url;
+            els.renderBgm.currentTime = 0;
+            els.renderBgm.loop = true;
+
+            const targetVol = Math.max(0.0001, settings.bgmVol);
+            if (settings.bgmFade && totalSec > 0.8) {
+              const fadeIn = Math.min(1.0, totalSec * 0.3);
+              const fadeOut = Math.min(1.5, totalSec * 0.4);
+              const fadeOutStart = Math.max(fadeIn, totalSec - fadeOut);
+
+              state.bgmGain.gain.setValueAtTime(0.0001, now);
+              state.bgmGain.gain.linearRampToValueAtTime(targetVol, now + fadeIn);
+              state.bgmGain.gain.setValueAtTime(targetVol, now + fadeOutStart);
+              state.bgmGain.gain.linearRampToValueAtTime(0.0001, now + totalSec);
+            } else {
+              state.bgmGain.gain.setValueAtTime(settings.bgmVol, now);
+            }
+
+            await els.renderBgm.play().catch(() => {});
+          } else {
+            state.bgmGain.gain.setValueAtTime(0, now);
+            els.renderBgm.pause();
+            els.renderBgm.removeAttribute('src');
+          }
+
+          // 若為匯出模式，啟動 MediaRecorder
+          let recorder = null;
+          let chunks = [];
+          let recordingStopped = Promise.resolve();
+          let mimeInfo = { mime: '', ext: 'webm' };
+
+          if (record) {
+            const canvasStream = els.previewCanvas.captureStream(30);
+            const combinedStream = new MediaStream([
+              ...canvasStream.getVideoTracks(),
+              ...state.audioDest.stream.getAudioTracks(),
+            ]);
+
+            mimeInfo = detectBestMimeType();
+            const bitrate = settings.width >= 1080 ? 8_000_000 : 5_500_000;
+            const opts = mimeInfo.mime
+              ? { mimeType: mimeInfo.mime, videoBitsPerSecond: bitrate }
+              : { videoBitsPerSecond: bitrate };
+
+            recorder = new MediaRecorder(combinedStream, opts);
+            state.mediaRecorder = recorder;
+
+            recordingStopped = new Promise((resolve) => {
+              recorder.ondataavailable = (e) => {
+                if (e.data && e.data.size > 0) chunks.push(e.data);
+              };
+              recorder.onstop = () => resolve();
+            });
+
+            recorder.start(200);
+          }
+
+          // 逐段渲染（影片與照片混剪）
+          let elapsedTotalMs = 0;
+          let photoCounter = 0;
+          let hasPrevFrame = false;
+
+          for (let i = 0; i < state.clips.length; i++) {
+            if (state.cancelRequested) break;
+            const clip = state.clips[i];
+            els.statusText.textContent = `${record ? '剪輯' : '預覽'}第 ${i + 1} / ${state.clips.length} 段`;
+            els.progressLabel.textContent = `處理中：${clip.name}`;
+
+            if (clip.type === 'image') {
+              await renderPhotoClip(clip, photoCounter, hasPrevFrame, settings, elapsedTotalMs, totalMs);
+              photoCounter++;
+              elapsedTotalMs += settings.clipDuration * 1000;
+            } else {
+              const { targetRealMs } = await prepareVideoClip(clip, settings);
+              if (state.cancelRequested) break;
+              await renderVideoClip(clip, targetRealMs, hasPrevFrame, settings, elapsedTotalMs, totalMs);
+              elapsedTotalMs += targetRealMs;
+            }
+            hasPrevFrame = true;
+          }
+
+          // 結尾行動呼籲卡 (CTA)
+          if (!state.cancelRequested && settings.ctaEnabled && hasPrevFrame) {
+            els.statusText.textContent = '渲染結尾行動呼籲卡...';
+            els.progressLabel.textContent = '正在加上品牌結尾 CTA 卡片';
+            await renderOutroCta(settings, elapsedTotalMs, totalMs);
+          }
+
+          // 結束清理
+          els.renderVideo.pause();
+          els.renderBgm.pause();
+          if (state.rafId) cancelAnimationFrame(state.rafId);
+
+          if (recorder && recorder.state !== 'inactive') {
+            recorder.stop();
+          }
+          await recordingStopped;
+
+          if (state.cancelRequested) {
+            showToast('已停止播放／剪輯', 'info');
+            updateEstimateText();
+            drawIdleCanvas();
+            return;
+          }
+
+          els.progressBar.style.width = '100%';
+          els.progressPercent.textContent = '100%';
+
+          if (record) {
+            const blob = new Blob(chunks, { type: mimeInfo.mime || 'video/webm' });
+            if (state.outputUrl) URL.revokeObjectURL(state.outputUrl);
+            state.outputUrl = URL.createObjectURL(blob);
+
+            els.resultVideo.src = state.outputUrl;
+            els.downloadLink.href = state.outputUrl;
+            els.downloadLink.download = `travel_reel_${Date.now()}.${mimeInfo.ext}`;
+            els.resultFormatBadge.textContent = mimeInfo.ext.toUpperCase();
+            els.resultSection.classList.remove('hidden');
+
+            els.progressLabel.textContent = '剪輯匯出完成！可於下方預覽或下載';
+            showToast('旅遊短影音匯出完成！', 'success');
+          } else {
+            els.progressLabel.textContent = '預覽播放完畢，滿意即可點擊匯出';
+            showToast('預覽播放完成！', 'success');
+          }
+        } catch (err) {
+          console.error(err);
+          showToast(`執行過程發生錯誤：${err.message || '未知錯誤'}`, 'error');
+          els.renderVideo.pause();
+          els.renderBgm.pause();
+          if (state.mediaRecorder && state.mediaRecorder.state !== 'inactive') {
+            state.mediaRecorder.stop();
+          }
+        } finally {
+          setRunningUI(false, false);
+        }
+      }
+
+      // 更新濾鏡按鈕選中樣式
+      function setActiveFilter(filterKey) {
+        state.activeFilter = filterKey;
+        els.filterBtns.forEach((btn) => {
+          const active = btn.dataset.filter === filterKey;
+          btn.classList.toggle('bg-amber-500/15', active);
+          btn.classList.toggle('border-amber-500', active);
+          btn.classList.toggle('text-amber-200', active);
+          btn.classList.toggle('bg-zinc-950/70', !active);
+          btn.classList.toggle('border-zinc-800', !active);
+          btn.classList.toggle('text-zinc-300', !active);
+        });
+        if (!state.isRunning) drawIdleCanvas();
+      }
+
+      // 套用一鍵風格預設
+      function applyPreset(mode) {
+        const isResort = mode === 'resort';
+        els.presetResortBtn.className = isResort
+          ? 'text-left p-3.5 rounded-xl border transition bg-amber-500/10 border-amber-500/60 ring-1 ring-amber-500/30'
+          : 'text-left p-3.5 rounded-xl border transition bg-zinc-950/60 border-zinc-800 hover:border-zinc-700';
+        els.presetFoodBtn.className = !isResort
+          ? 'text-left p-3.5 rounded-xl border transition bg-amber-500/10 border-amber-500/60 ring-1 ring-amber-500/30'
+          : 'text-left p-3.5 rounded-xl border transition bg-zinc-950/60 border-zinc-800 hover:border-zinc-700';
+
+        if (isResort) {
+          els.clipDurationRange.value = 2.8;
+          els.clipDurationNum.value = 2.8;
+          els.playbackSpeedRange.value = 1.0;
+          els.playbackSpeedVal.textContent = '1.0x';
+          els.transitionSelect.value = 'crossfade';
+          els.captionStyleSelect.value = 'bottom';
+          setActiveFilter('warm');
+          showToast('已套用「質感渡假風」預設參數', 'success');
+        } else {
+          els.clipDurationRange.value = 2.0;
+          els.clipDurationNum.value = 2.0;
+          els.playbackSpeedRange.value = 1.2;
+          els.playbackSpeedVal.textContent = '1.2x';
+          els.transitionSelect.value = 'cut';
+          els.captionStyleSelect.value = 'center';
+          setActiveFilter('food');
+          showToast('已套用「美食快剪風」預設參數', 'success');
+        }
+        updateEstimateText();
+      }
+
+      // --- 事件綁定 ---
+      els.presetResortBtn.addEventListener('click', () => applyPreset('resort'));
+      els.presetFoodBtn.addEventListener('click', () => applyPreset('food'));
+
+      els.filterBtns.forEach((btn) => {
+        btn.addEventListener('click', () => setActiveFilter(btn.dataset.filter));
+      });
+
+      els.dropZone.addEventListener('click', () => els.mediaInput.click());
+      els.mediaInput.addEventListener('change', (e) => {
+        if (e.target.files.length) addMediaFiles(e.target.files);
+        e.target.value = '';
+      });
+
+      els.dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        els.dropZone.classList.add('border-amber-500', 'bg-amber-500/10');
+      });
+      els.dropZone.addEventListener('dragleave', () => {
+        els.dropZone.classList.remove('border-amber-500', 'bg-amber-500/10');
+      });
+      els.dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        els.dropZone.classList.remove('border-amber-500', 'bg-amber-500/10');
+        if (e.dataTransfer.files.length) addMediaFiles(e.dataTransfer.files);
+      });
+
+      // 素材清單操作委派
+      els.clipsList.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-action]');
+        if (!btn) return;
+        const idx = parseInt(btn.dataset.idx, 10);
+        const action = btn.dataset.action;
+
+        if (action === 'up' && idx > 0) {
+          [state.clips[idx - 1], state.clips[idx]] = [state.clips[idx], state.clips[idx - 1]];
+          renderClipsList();
+        } else if (action === 'down' && idx < state.clips.length - 1) {
+          [state.clips[idx + 1], state.clips[idx]] = [state.clips[idx], state.clips[idx + 1]];
+          renderClipsList();
+        } else if (action === 'delete') {
+          URL.revokeObjectURL(state.clips[idx].url);
+          state.clips.splice(idx, 1);
+          renderClipsList();
+        }
+      });
+
+      els.clipsList.addEventListener('input', (e) => {
+        const field = e.target.dataset.field;
+        if (!field) return;
+        const idx = parseInt(e.target.dataset.idx, 10);
+        if (state.clips[idx]) {
+          state.clips[idx][field] = e.target.value;
+          if (idx === 0 && !state.isRunning) drawIdleCanvas();
+        }
+      });
+
+      // 套用旅遊範例文案
+      els.applyTravelSampleBtn.addEventListener('click', () => {
+        if (!state.clips.length) {
+          showToast('請先加入影片或照片素材再套用範例文案', 'info');
+          return;
+        }
+        state.clips.forEach((clip, i) => {
+          const sample = TRAVEL_SAMPLES[i % TRAVEL_SAMPLES.length];
+          clip.location = sample.location;
+          clip.caption = sample.caption;
+        });
+        renderClipsList();
+        showToast('已套用旅遊景點標籤與文案範例', 'success');
+      });
+
+      // 清空全部素材
+      els.clearAllBtn.addEventListener('click', () => {
+        if (!state.clips.length) return;
+        state.clips.forEach((c) => URL.revokeObjectURL(c.url));
+        state.clips = [];
+        renderClipsList();
+        showToast('已清空全部素材', 'info');
+      });
+
+      // BGM 上傳與移除
+      els.bgmInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (state.bgm) URL.revokeObjectURL(state.bgm.url);
+        state.bgm = { file, url: URL.createObjectURL(file), name: file.name };
+        els.bgmFileName.textContent = file.name;
+        els.bgmFileName.classList.remove('text-zinc-400');
+        els.bgmFileName.classList.add('text-zinc-100');
+        els.removeBgmBtn.classList.remove('hidden');
+        e.target.value = '';
+        showToast('已載入背景音樂', 'success');
+      });
+
+      els.removeBgmBtn.addEventListener('click', () => {
+        if (state.bgm) {
+          URL.revokeObjectURL(state.bgm.url);
+          state.bgm = null;
+        }
+        els.bgmFileName.textContent = '尚未選擇音樂（將僅保留原片聲音）';
+        els.bgmFileName.classList.add('text-zinc-400');
+        els.bgmFileName.classList.remove('text-zinc-100');
+        els.removeBgmBtn.classList.add('hidden');
+      });
+
+      // Logo 上傳與移除
+      els.logoInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const url = URL.createObjectURL(file);
+        try {
+          const img = await loadImage(url);
+          if (state.logo) URL.revokeObjectURL(state.logo.url);
+          state.logo = { url, img };
+          els.logoPreviewBox.innerHTML = `<img src="${url}" alt="Logo" class="w-full h-full object-contain p-1" />`;
+          els.removeLogoBtn.classList.remove('hidden');
+          if (!state.isRunning) drawIdleCanvas();
+          showToast('已上傳品牌 Logo 浮水印', 'success');
+        } catch {
+          URL.revokeObjectURL(url);
+          showToast('Logo 圖片讀取失敗', 'error');
+        }
+        e.target.value = '';
+      });
+
+      els.removeLogoBtn.addEventListener('click', () => {
+        if (state.logo) {
+          URL.revokeObjectURL(state.logo.url);
+          state.logo = null;
+        }
+        els.logoPreviewBox.innerHTML = '<span class="text-[10px] text-zinc-600">無 Logo</span>';
+        els.removeLogoBtn.classList.add('hidden');
+        if (!state.isRunning) drawIdleCanvas();
+      });
+
+      els.logoOpacityRange.addEventListener('input', () => {
+        els.logoOpacityVal.textContent = `${els.logoOpacityRange.value}%`;
+        if (!state.isRunning) drawIdleCanvas();
+      });
+
+      // CTA 開關
+      els.ctaToggle.addEventListener('change', () => {
+        els.ctaFieldsContainer.classList.toggle('opacity-40', !els.ctaToggle.checked);
+        els.ctaFieldsContainer.classList.toggle('pointer-events-none', !els.ctaToggle.checked);
+        updateEstimateText();
+      });
+
+      // 參數同步
+      els.clipDurationRange.addEventListener('input', () => {
+        els.clipDurationNum.value = els.clipDurationRange.value;
+        updateEstimateText();
+      });
+      els.clipDurationNum.addEventListener('input', () => {
+        const v = Math.max(0.8, Math.min(8, parseFloat(els.clipDurationNum.value) || 2.8));
+        els.clipDurationRange.value = v;
+        updateEstimateText();
+      });
+      els.playbackSpeedRange.addEventListener('input', () => {
+        els.playbackSpeedVal.textContent = `${parseFloat(els.playbackSpeedRange.value).toFixed(1)}x`;
+        updateEstimateText();
+      });
+      els.origVolRange.addEventListener('input', () => {
+        els.origVolVal.textContent = `${els.origVolRange.value}%`;
+      });
+      els.bgmVolRange.addEventListener('input', () => {
+        els.bgmVolVal.textContent = `${els.bgmVolRange.value}%`;
+      });
+      els.captionStyleSelect.addEventListener('change', () => {
+        if (!state.isRunning) drawIdleCanvas();
+      });
+      els.resolutionSelect.addEventListener('change', () => {
+        if (!state.isRunning) drawIdleCanvas();
+      });
+
+      // 預覽、匯出、停止按鈕
+      els.previewOnlyBtn.addEventListener('click', () => runTimeline({ record: false }));
+      els.startExportBtn.addEventListener('click', () => runTimeline({ record: true }));
+      els.stopRenderBtn.addEventListener('click', () => {
+        if (!state.isRunning) return;
+        state.cancelRequested = true;
+        els.statusText.textContent = '正在停止...';
+      });
+
+      // 初始繪製
+      drawIdleCanvas();
+      updateEstimateText();
+    })();
+  </script>
+</body>
+</html>
