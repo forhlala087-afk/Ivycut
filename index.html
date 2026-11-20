@@ -477,6 +477,12 @@
         fresh: 'brightness(1.08) contrast(1.06) saturate(1.12) hue-rotate(-5deg)',
       };
 
+      const CAPTION_COLORS = {
+        white: { fill: '#ffffff', stroke: '#000000' },
+        pink: { fill: '#ff4d94', stroke: '#ffffff' },
+        yellow: { fill: '#ffe600', stroke: '#000000' },
+      };
+
       const CTA_DURATION_SEC = 2.2;
       const CROSSFADE_SEC = 0.4;
 
@@ -814,12 +820,13 @@
       }
 
       // 繪製畫面字卡（支援「中下方質感字」與「正中央大字」）
-      function drawCaption(text, styleMode, alpha = 1) {
+      function drawCaption(text, styleMode, alpha = 1, colorKey = 'white') {
         const trimmed = (text || '').trim();
         if (!trimmed) return;
         const lines = trimmed.split('\n').map((l) => l.trim()).filter(Boolean).slice(0, 3);
         if (!lines.length) return;
 
+        const palette = CAPTION_COLORS[colorKey] || CAPTION_COLORS.white;
         const cw = els.previewCanvas.width;
         const ch = els.previewCanvas.height;
         const scale = cw / 1080;
@@ -830,7 +837,6 @@
         ctx.textBaseline = 'middle';
 
         if (styleMode === 'bottom') {
-          // 中下方質感字：底部柔光漸層襯底 + 俐落白字與柔和陰影
           const grad = ctx.createLinearGradient(0, ch * 0.62, 0, ch);
           grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
           grad.addColorStop(1, 'rgba(0, 0, 0, 0.62)');
@@ -843,22 +849,29 @@
           ctx.shadowColor = 'rgba(0, 0, 0, 0.72)';
           ctx.shadowBlur = 16 * scale;
           ctx.shadowOffsetY = 3 * scale;
-          ctx.fillStyle = '#ffffff';
+          ctx.fillStyle = palette.fill;
+
+          if (colorKey !== 'white') {
+            ctx.lineJoin = 'round';
+            ctx.lineWidth = Math.max(4, Math.round(fs * 0.14));
+            ctx.strokeStyle = palette.stroke;
+          }
 
           const baseY = ch * 0.78 - ((lines.length - 1) * lh) / 2;
           lines.forEach((line, idx) => {
-            ctx.fillText(line, cw / 2, baseY + idx * lh, cw * 0.86);
+            const y = baseY + idx * lh;
+            if (colorKey !== 'white') ctx.strokeText(line, cw / 2, y, cw * 0.86);
+            ctx.fillText(line, cw / 2, y, cw * 0.86);
           });
         } else {
-          // 正中央大字：粗黑邊白字（吸睛快剪風）
           const fs = Math.round(68 * scale);
           const lh = Math.round(fs * 1.32);
           ctx.font = `900 ${fs}px "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif`;
           ctx.lineJoin = 'round';
           ctx.miterLimit = 2;
           ctx.lineWidth = Math.max(5, Math.round(fs * 0.16));
-          ctx.strokeStyle = '#000000';
-          ctx.fillStyle = '#ffffff';
+          ctx.strokeStyle = palette.stroke;
+          ctx.fillStyle = palette.fill;
 
           const baseY = ch * 0.5 - ((lines.length - 1) * lh) / 2;
           lines.forEach((line, idx) => {
@@ -977,7 +990,8 @@
           drawCaption(
             firstClip.caption || `已載入 ${state.clips.length} 筆素材\n點擊「僅預覽效果」或「開始匯出」`,
             settings.captionStyle,
-            1
+            1,
+            firstClip.captionColor
           );
         } else {
           drawLocationPill('花蓮・海景渡假村', 1);
@@ -1034,11 +1048,16 @@
               </div>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
-              <div class="sm:col-span-5">
+              <div class="sm:col-span-5 space-y-2">
                 <input type="text" data-field="location" data-idx="${idx}" value="${clip.location.replace(/"/g, '&quot;')}" placeholder="📍 景點標籤（如：花蓮・海景房）" class="w-full bg-zinc-900/90 border border-zinc-800 focus:border-amber-500 rounded-lg px-2.5 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none" />
+                <select data-field="captionColor" data-idx="${idx}" class="w-full bg-zinc-900/90 border border-zinc-800 focus:border-amber-500 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none">
+                  <option value="white" ${clip.captionColor === 'white' ? 'selected' : ''}>⚪ 標準白字（中段）</option>
+                  <option value="pink" ${clip.captionColor === 'pink' ? 'selected' : ''}>🩷 吸睛粉紅（開頭/結尾）</option>
+                  <option value="yellow" ${clip.captionColor === 'yellow' ? 'selected' : ''}>💛 重點黃字（亮點）</option>
+                </select>
               </div>
               <div class="sm:col-span-7">
-                <textarea rows="2" data-field="caption" data-idx="${idx}" placeholder="畫面字卡（可換行，留空不顯示）" class="w-full bg-zinc-900/90 border border-zinc-800 focus:border-amber-500 rounded-lg px-2.5 py-1.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none resize-none leading-relaxed">${clip.caption}</textarea>
+                <textarea rows="3" data-field="caption" data-idx="${idx}" placeholder="畫面字卡（可換行，留空不顯示）" class="w-full bg-zinc-900/90 border border-zinc-800 focus:border-amber-500 rounded-lg px-2.5 py-1.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none resize-none leading-relaxed">${clip.caption}</textarea>
               </div>
             </div>
           `;
@@ -1075,6 +1094,7 @@
                 img,
                 location: '',
                 caption: '',
+                captionColor: 'white',
               });
               addedCount++;
             } catch {
@@ -1093,6 +1113,7 @@
               img: null,
               location: '',
               caption: '',
+              captionColor: 'white',
             });
             addedCount++;
           }
@@ -1216,7 +1237,7 @@
         // 文字與標籤微淡入（0.25 秒），視覺更柔和
         const textAlpha = Math.min(1, elapsedMs / 250);
         drawLocationPill(clip.location, textAlpha);
-        drawCaption(clip.caption, settings.captionStyle, textAlpha);
+        drawCaption(clip.caption, settings.captionStyle, textAlpha, clip.captionColor);
         drawBrandWatermark(settings.logoOpacity);
       }
 
