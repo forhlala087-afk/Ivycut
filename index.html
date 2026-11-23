@@ -1013,7 +1013,7 @@
       const lineHeight = Math.round(fontSize * 1.32);
 
       ctx.save();
-      ctx.font = `900 ${fontSize}px "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif`;
+      ctx.font = `700 ${fontSize}px "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
 
@@ -1022,9 +1022,10 @@
       lines.forEach((line, i) => {
         const y = startY + i * lineHeight;
         // 柔和深色微陰影，確保在淺色天空或亮背景上依然清晰銳利
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.78)';
-        ctx.shadowBlur = Math.round(14 * scale);
-        ctx.shadowOffsetX = 0;
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
+ctx.shadowBlur = 6;
+ctx.shadowOffsetX = 2;
+ctx.shadowOffsetY = 3;
         ctx.shadowOffsetY = Math.round(4 * scale);
 
         // 極細深色描邊增加高對比可讀性
