@@ -686,18 +686,23 @@
       return map[ext] || '';
     }
 
+    function normPos(val, fallback) {
+      if (typeof val !== 'number') return fallback;
+      return val > 1 ? val / 100 : val; // 支援寫 75 或 0.75
+    }
+
     async function handleZipProject(zipFile) {
       if (typeof JSZip === 'undefined') {
         showToast('JSZip 尚未載入，請確認網路連線後重試', 'error');
         return;
       }
-      showToast('正在解壓縮 ZIP 並讀取腳本，請稍候...', 'info');
+      showToast('正在解壓縮 ZIP 並讀取設定、音樂與腳本...', 'info');
       try {
         const zip = await JSZip.loadAsync(zipFile);
         const fileMap = new Map();
         let jsonEntry = null;
 
-        // 掃描 ZIP 內所有檔案（自動忽略 Mac 產生的 __MACOSX 隱藏檔與資料夾層級）
+        // 掃描 ZIP 內所有檔案（自動忽略 Mac 隱藏檔與資料夾層級）
         zip.forEach((relPath, entry) => {
           if (entry.dir || relPath.startsWith('__MACOSX/') || relPath.includes('/.')) return;
           const baseName = relPath.split('/').pop();
@@ -715,6 +720,62 @@
         }
 
         const scriptData = JSON.parse(await jsonEntry.async('string'));
+
+        // 1. 套用 JSON 內的全域預設設定 (settings)
+        if (!Array.isArray(scriptData) && scriptData.settings) {
+          const s = scriptData.settings;
+          if (typeof s.defaultSubX === 'number') {
+            state.defaultSubX = normPos(s.defaultSubX, 0.5);
+            const el = document.getElementById('defaultSubX');
+            if (el) el.value = Math.round(state.defaultSubX * 100);
+          }
+          if (typeof s.defaultSubY === 'number') {
+            state.defaultSubY = normPos(s.defaultSubY, 0.35);
+            const el = document.getElementById('defaultSubY');
+            if (el) el.value = Math.round(state.defaultSubY * 100);
+          }
+          if (s.defaultSubStyle) {
+            state.defaultSubStyle = s.defaultSubStyle;
+            const el = document.getElementById('defaultSubStyle');
+            if (el) el.value = s.defaultSubStyle;
+          }
+          if (typeof s.defaultSubFontSize === 'number') {
+            state.defaultSubFontSize = s.defaultSubFontSize;
+            const el = document.getElementById('defaultSubFontSize');
+            if (el) el.value = s.defaultSubFontSize;
+          }
+          if (typeof s.enableColorFilter === 'boolean') {
+            state.enableColorFilter = s.enableColorFilter;
+            if (els.filterToggle) els.filterToggle.checked = s.enableColorFilter;
+          }
+          if (typeof s.enableHookBigText === 'boolean') {
+            state.enableHookBigText = s.enableHookBigText;
+            const el = document.getElementById('hookToggle');
+            if (el) el.checked = s.enableHookBigText;
+          }
+        }
+
+        // 2. 載入 JSON 指定的背景音樂 (bgm)
+        if (!Array.isArray(scriptData) && scriptData.bgm) {
+          const bgmKey = scriptData.bgm.trim().toLowerCase();
+          const bgmMatched = fileMap.get(bgmKey);
+          if (bgmMatched) {
+            try {
+              const ab = await bgmMatched.entry.async('arraybuffer');
+              const ctx = ensureAudioContext();
+              state.bgmBuffer = await ctx.decodeAudioData(ab);
+              state.bgmName = bgmMatched.baseName;
+              els.bgmStatusBadge.textContent = bgmMatched.baseName;
+            } catch (err) {
+              console.error('BGM 解碼失敗:', err);
+              showToast(`音樂解碼失敗：${scriptData.bgm}`, 'warning');
+            }
+          } else {
+            showToast(`ZIP 裡找不到指定的音樂檔：${scriptData.bgm}`, 'warning');
+          }
+        }
+
+        // 3. 讀取並組裝所有分鏡片段 (clips)
         const items = Array.isArray(scriptData) ? scriptData : (scriptData.clips || []);
         if (items.length === 0) {
           showToast('JSON 腳本內容是空的！', 'warning');
@@ -733,7 +794,6 @@
             continue;
           }
 
-          // 同一支影片重複使用時直接從快取取 File，加快速度
           let fileObj = fileCache.get(key);
           if (!fileObj) {
             const blob = await matched.entry.async('blob');
@@ -748,18 +808,40 @@
 
           const clip = isVideo ? await createVideoClip(fileObj) : await createImageClip(fileObj);
 
-          // 套用 JSON 指定的起始秒數、片段時長與字幕
           if (isVideo && typeof item.start === 'number') {
             clip.startTime = Math.max(0, Math.min(item.start, Math.max(0, clip.mediaDuration - 0.3)));
           }
           if (typeof item.duration === 'number') {
             clip.duration = isVideo ? Math.min(item.duration, clip.mediaDuration) : item.duration;
           }
-          if (item.text !== undefined) {
-            clip.subtitles = [createDefaultSubtitle(item.text, 0)];
-          }
-          if (item.text2) {
-            clip.subtitles.push(createDefaultSubtitle(item.text2, 1));
+
+          // 支援單段或多段自訂字幕（有寫才覆蓋預設值）
+          if (Array.isArray(item.subtitles)) {
+            clip.subtitles = item.subtitles.map((subCfg, idx) => {
+              const base = createDefaultSubtitle(subCfg.text || '', idx);
+              if (subCfg.style) base.style = subCfg.style;
+              if (typeof subCfg.fontSize === 'number') base.fontSize = subCfg.fontSize;
+              if (typeof subCfg.x === 'number') base.x = normPos(subCfg.x, base.x);
+              if (typeof subCfg.y === 'number') base.y = normPos(subCfg.y, base.y);
+              return base;
+            });
+          } else {
+            if (item.text !== undefined) {
+              const s1 = createDefaultSubtitle(item.text, 0);
+              if (item.style) s1.style = item.style;
+              if (typeof item.fontSize === 'number') s1.fontSize = item.fontSize;
+              if (typeof item.x === 'number') s1.x = normPos(item.x, s1.x);
+              if (typeof item.y === 'number') s1.y = normPos(item.y, s1.y);
+              clip.subtitles = [s1];
+            }
+            if (item.text2) {
+              const s2 = createDefaultSubtitle(item.text2, 1);
+              if (item.style2) s2.style = item.style2;
+              if (typeof item.fontSize2 === 'number') s2.fontSize = item.fontSize2;
+              if (typeof item.x2 === 'number') s2.x = normPos(item.x2, s2.x);
+              if (typeof item.y2 === 'number') s2.y = normPos(item.y2, s2.y);
+              clip.subtitles.push(s2);
+            }
           }
 
           state.clips.push(clip);
@@ -770,7 +852,7 @@
           selectClipForEditing(state.clips[0].id);
           const msg = missingFiles.length > 0
             ? `已自動組裝 ${loadedCount} 段！（缺檔：${missingFiles.join(', ')}）`
-            : `太神啦！已從 ZIP 自動組裝完成 ${loadedCount} 段腳本與字幕`;
+            : `全部設定、音樂與 ${loadedCount} 段影片已自動組裝完成！`;
           showToast(msg, missingFiles.length > 0 ? 'warning' : 'success');
         } else {
           showToast('沒有成功載入任何素材，請確認 ZIP 內檔名與 JSON 一致', 'error');
