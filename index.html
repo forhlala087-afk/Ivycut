@@ -3,30 +3,31 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>旅行社短影音快剪工具｜9:16 踩點宣傳版</title>
+  <title>旅行社短影音快剪工具 V2｜拖拉排版・3秒防卡頓匯出</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Google Fonts: Noto Sans TC & Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
   <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
-            sans: ['"Noto Sans TC"', 'Inter', 'system-ui', 'sans-serif'],
+            sans: ['"PingFang TC"', '"Noto Sans TC"', '"Microsoft JhengHei"', 'Inter', 'sans-serif'],
           },
           colors: {
             studio: {
-              bg: '#0B0E14',
-              panel: '#131823',
-              card: '#1A2130',
-              border: '#273145',
+              bg: '#0B0F17',
+              panel: '#131926',
+              card: '#1B2335',
+              cardHover: '#222C42',
+              border: '#2B364D',
               accent: '#F97316',
               accentHover: '#EA580C',
-              cyan: '#06B6D4'
+              blue: '#3B82F6'
             }
           }
         }
@@ -34,26 +35,26 @@
     };
   </script>
   <style>
-    /* 自訂捲軸樣式，打造專業剪輯軟體質感 */
+    /* 專業剪輯軟體風格捲軸 */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
     }
     ::-webkit-scrollbar-track {
-      background: #0B0E14;
+      background: #0B0F17;
     }
     ::-webkit-scrollbar-thumb {
-      background: #2D3748;
+      background: #2B364D;
       border-radius: 9999px;
     }
     ::-webkit-scrollbar-thumb:hover {
-      background: #4A5568;
+      background: #475569;
     }
-    /* 自訂 Range Slider */
+    /* 自訂滑桿樣式 */
     input[type="range"] {
       -webkit-appearance: none;
       appearance: none;
-      background: #273145;
+      background: #2B364D;
       height: 6px;
       border-radius: 9999px;
       outline: none;
@@ -61,29 +62,32 @@
     input[type="range"]::-webkit-slider-thumb {
       -webkit-appearance: none;
       appearance: none;
-      width: 16px;
-      height: 16px;
+      width: 15px;
+      height: 15px;
       border-radius: 50%;
       background: #F97316;
       cursor: pointer;
-      border: 2px solid #FFF;
-      box-shadow: 0 0 8px rgba(249, 115, 22, 0.5);
+      border: 2px solid #FFFFFF;
+      box-shadow: 0 0 8px rgba(249, 115, 22, 0.55);
     }
     .drop-active {
       border-color: #F97316 !important;
       background-color: rgba(249, 115, 22, 0.08) !important;
     }
+    /* 預覽畫布禁止觸控捲動，方便手指直接拖曳文字與圖片 */
+    #previewCanvas {
+      touch-action: none;
+    }
   </style>
 </head>
 <body class="bg-studio-bg text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-orange-500/30">
 
-  <!-- Toast 通知容器 (取代 alert) -->
+  <!-- Toast 通知容器 (取代 alert/confirm) -->
   <div id="toastContainer" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none max-w-sm w-full px-4 sm:px-0"></div>
 
   <!-- 頂部導覽列 -->
-  <header class="sticky top-0 z-30 bg-studio-panel/90 backdrop-blur-md border-b border-studio-border">
-    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
-      <!-- 品牌標題 -->
+  <header class="sticky top-0 z-30 bg-studio-panel/95 backdrop-blur-md border-b border-studio-border">
+    <div class="max-w-[1480px] mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/20 shrink-0">
           <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -91,273 +95,272 @@
           </svg>
         </div>
         <div>
-          <h1 class="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-2">
+          <h1 class="text-base sm:text-lg font-bold tracking-tight text-white flex flex-wrap items-center gap-2">
             旅行社短影音快剪工具
-            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-orange-500/15 text-orange-400 border border-orange-500/30">9:16 踩點宣傳版</span>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/40">V2 升級版</span>
+            <span class="text-[11px] font-medium px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/30 hidden sm:inline-block">1080×1920・10Mbps・3秒預熱防卡頓</span>
           </h1>
-          <p class="text-xs text-slate-400 hidden sm:block">免安裝、免後端・純瀏覽器完成踩點快切、雙軌混音與直式短影音匯出</p>
+          <p class="text-xs text-slate-400 hidden sm:block">點選左側分鏡即可在右側手機畫面直接拖拉多段字幕與圖片位置</p>
         </div>
       </div>
 
-      <!-- 快速操作按鈕 -->
       <div class="flex items-center gap-2 sm:gap-3">
-        <button id="btnApplyTemplate" class="px-3 py-2 rounded-xl text-xs sm:text-sm font-medium bg-studio-card hover:bg-slate-700/80 text-slate-200 border border-studio-border transition flex items-center gap-1.5 cursor-pointer">
-          <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+        <button id="btnLoadDemo" class="px-3 py-2 rounded-xl text-xs sm:text-sm font-medium bg-blue-500/15 hover:bg-blue-500/25 text-blue-300 border border-blue-500/35 transition flex items-center gap-1.5 cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5z" />
           </svg>
-          套用旅遊爆款文案模板
+          載入範例素材體驗
         </button>
-        <button id="btnHeaderExport" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg shadow-orange-500/25 transition flex items-center gap-1.5 cursor-pointer">
+        <button id="btnHeaderExport" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg shadow-orange-500/25 transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
           </svg>
-          匯出短影音
+          一鍵匯出短影音
         </button>
       </div>
     </div>
   </header>
 
-  <!-- 主要工作區 -->
-  <main class="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+  <!-- 主要兩欄工作區 -->
+  <main class="flex-1 max-w-[1480px] w-full mx-auto px-4 sm:px-6 py-5 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-    <!-- 左側／中間欄：素材上傳與分鏡腳本區 (7/12 ~ 8/12) -->
-    <section class="lg:col-span-7 xl:col-span-8 flex flex-col gap-6">
+    <!-- 左側主面板：素材上傳＋分鏡腳本與字幕編排 (7/12 ~ 8/12) -->
+    <section class="lg:col-span-7 xl:col-span-8 flex flex-col gap-5">
 
-      <!-- Step 1: 素材上傳區 -->
-      <div class="bg-studio-panel border border-studio-border rounded-2xl p-5 shadow-xl">
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+      <!-- Step 1: 拖拉上傳區 -->
+      <div class="bg-studio-panel border border-studio-border rounded-2xl p-4 sm:p-5 shadow-xl">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
           <div class="flex items-center gap-2">
             <span class="w-6 h-6 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">1</span>
-            <h2 class="text-base font-bold text-white">上傳行程素材（影片或照片）</h2>
+            <h2 class="text-sm sm:text-base font-bold text-white">匯入行程影片或照片素材</h2>
           </div>
-          <button id="btnLoadDemo" class="text-xs px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 transition cursor-pointer flex items-center gap-1.5">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-            </svg>
-            先載入範例素材體驗看看
+          <span class="text-xs text-slate-400">自動裁切 9:16 滿版・照片自動微推進動態</span>
+        </div>
+
+        <div id="dropZone" class="border-2 border-dashed border-studio-border hover:border-orange-500/70 bg-studio-bg/60 rounded-2xl p-5 sm:p-6 text-center transition cursor-pointer group">
+          <input id="mediaInput" type="file" multiple accept="video/mp4,video/quicktime,video/webm,image/jpeg,image/png,image/webp" class="hidden" />
+          <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <div class="w-11 h-11 rounded-2xl bg-studio-card border border-studio-border flex items-center justify-center group-hover:scale-105 transition shrink-0">
+              <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
+              </svg>
+            </div>
+            <div class="text-center sm:text-left">
+              <p class="text-sm font-bold text-slate-200">點擊選擇或直接拖曳多個影片 / 照片到這裡</p>
+              <p class="text-xs text-slate-400 mt-0.5">支援 MP4、MOV、WebM、JPG、PNG（也可點上方「載入範例素材體驗」）</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: 分鏡腳本與字幕編排 -->
+      <div class="bg-studio-panel border border-studio-border rounded-2xl p-4 sm:p-5 shadow-xl">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">2</span>
+            <h2 class="text-sm sm:text-base font-bold text-white">分鏡腳本與字幕編排</h2>
+            <span id="clipCountBadge" class="text-xs px-2.5 py-0.5 rounded-lg bg-studio-card text-slate-300 border border-studio-border font-mono">0 個片段・總長 0.0 秒</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-[11px] text-orange-300/90 bg-orange-500/10 border border-orange-500/25 px-2.5 py-1 rounded-lg hidden sm:inline-block">提示：點擊任一分鏡卡片，右側即切換畫面讓您拖拉排版</span>
+            <button id="btnClearClips" class="text-xs text-slate-400 hover:text-rose-400 transition hidden cursor-pointer px-2 py-1">清空全部</button>
+          </div>
+        </div>
+
+        <!-- 無素材空白狀態 -->
+        <div id="emptyState" class="py-12 text-center border border-dashed border-studio-border/70 rounded-2xl bg-studio-bg/35 px-4">
+          <p class="text-sm font-medium text-slate-300 mb-1.5">目前還沒有分鏡素材</p>
+          <p class="text-xs text-slate-500 mb-4">上傳行程影片或點「載入範例素材體驗」，就能為每一段加上多組字幕與圖片貼圖！</p>
+          <button id="btnEmptyDemo" class="px-4 py-2 rounded-xl bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/40 text-xs font-bold transition cursor-pointer">
+            載入 5 段旅遊範例素材馬上試用
           </button>
         </div>
 
-        <!-- 拖拉上傳框 -->
-        <div id="dropZone" class="border-2 border-dashed border-studio-border hover:border-orange-500/60 bg-studio-bg/50 rounded-2xl p-6 sm:p-8 text-center transition cursor-pointer group">
-          <input id="mediaInput" type="file" multiple accept="video/mp4,video/quicktime,video/webm,image/jpeg,image/png,image/webp" class="hidden" />
-          <div class="w-12 h-12 rounded-2xl bg-studio-card border border-studio-border mx-auto mb-3 flex items-center justify-center group-hover:scale-105 transition">
-            <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
-            </svg>
-          </div>
-          <p class="text-sm font-semibold text-slate-200 mb-1">點擊選擇或直接拖曳多個影片 / 照片到這裡</p>
-          <p class="text-xs text-slate-400">支援 MP4、MOV、WebM、JPG、PNG・系統會自動裁切為 9:16 滿版，照片自動加上微推鏡頭動態</p>
-        </div>
-      </div>
-
-      <!-- Step 2: 分鏡卡片清單 -->
-      <div class="bg-studio-panel border border-studio-border rounded-2xl p-5 shadow-xl">
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
-          <div class="flex items-center gap-2">
-            <span class="w-6 h-6 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">2</span>
-            <h2 class="text-base font-bold text-white">分鏡腳本與字幕編排</h2>
-            <span id="clipCountBadge" class="text-xs px-2 py-0.5 rounded-md bg-studio-card text-slate-300 border border-studio-border">0 個片段・總長 0.0 秒</span>
-          </div>
-          <button id="btnClearClips" class="text-xs text-slate-400 hover:text-rose-400 transition hidden cursor-pointer">清空全部片段</button>
-        </div>
-
-        <!-- 空白提示 -->
-        <div id="emptyState" class="py-12 text-center border border-dashed border-studio-border/60 rounded-xl bg-studio-bg/30">
-          <p class="text-sm text-slate-400 mb-2">目前還沒有任何行程素材</p>
-          <p class="text-xs text-slate-500">建議上傳 5～8 段動作感強的短片（如：打開飯店門、美食特寫、海景空拍），每段 1 秒快切最吸引人！</p>
-        </div>
-
-        <!-- 分鏡卡片列表 -->
-        <div id="storyboardList" class="flex flex-col gap-3"></div>
+        <!-- 分鏡卡片清單 -->
+        <div id="storyboardList" class="flex flex-col gap-4"></div>
       </div>
     </section>
 
-    <!-- 右側欄：9:16 即時預覽、音樂節奏、視覺與匯出 (Sticky) -->
+    <!-- 右側面板：9:16 拖拉排版預覽＋音樂混音＋匯出 (Sticky) -->
     <aside class="lg:col-span-5 xl:col-span-4 flex flex-col gap-5 lg:sticky lg:top-20">
 
-      <!-- 9:16 手機預覽框 -->
+      <!-- 9:16 手機預覽與拖拉排版區 -->
       <div class="bg-studio-panel border border-studio-border rounded-2xl p-4 shadow-xl flex flex-col items-center">
-        <div class="w-full flex items-center justify-between mb-3">
-          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            即時預覽 (9:16)
-          </span>
-          <span id="timecodeDisplay" class="text-xs font-mono text-slate-300 bg-studio-card px-2 py-0.5 rounded-md border border-studio-border">00:00.0 / 00:00.0</span>
+        <div class="w-full flex items-center justify-between gap-2 mb-2.5">
+          <div class="flex items-center gap-1.5">
+            <span id="previewModeDot" class="w-2 h-2 rounded-full bg-orange-400"></span>
+            <span id="previewModeLabel" class="text-xs font-bold text-slate-200">編輯排版模式（可直接拖曳文字/圖片）</span>
+          </div>
+          <span id="timecodeDisplay" class="text-[11px] font-mono text-slate-300 bg-studio-card px-2 py-0.5 rounded-md border border-studio-border shrink-0">00:00.0 / 00:00.0</span>
         </div>
 
         <!-- 手機外框 -->
-        <div class="relative w-full max-w-[270px] aspect-[9/16] bg-black rounded-[28px] p-2 border-[3px] border-slate-700 shadow-2xl shadow-black/70 overflow-hidden">
-          <div class="relative w-full h-full rounded-[20px] overflow-hidden bg-slate-950">
-            <canvas id="previewCanvas" width="540" height="960" class="w-full h-full object-contain block"></canvas>
-            <!-- 模擬 IG/TikTok 右側安全區提示 (極淡，不影響匯出) -->
-            <div class="pointer-events-none absolute right-2 bottom-16 flex flex-col gap-3 opacity-30">
-              <div class="w-6 h-6 rounded-full bg-white/40"></div>
-              <div class="w-6 h-6 rounded-full bg-white/40"></div>
-              <div class="w-6 h-6 rounded-full bg-white/40"></div>
-            </div>
-            <!-- 匯出中遮罩 -->
-            <div id="exportOverlay" class="hidden absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center z-20">
-              <div class="w-10 h-10 border-4 border-orange-500/30 border-t-orange-500 rounded-full animate-spin mb-3"></div>
-              <p class="text-sm font-bold text-white mb-1">正在錄製匯出短影音...</p>
-              <p id="exportPercentText" class="text-2xl font-black text-orange-400 font-mono">0%</p>
-              <p class="text-[11px] text-slate-400 mt-2">請保持此分頁在前景，完成後將自動下載</p>
+        <div class="relative w-full max-w-[285px] aspect-[9/16] bg-black rounded-[30px] p-2 border-[3px] border-slate-700 shadow-2xl shadow-black/75 overflow-hidden select-none">
+          <div class="relative w-full h-full rounded-[22px] overflow-hidden bg-slate-950">
+            <canvas id="previewCanvas" width="540" height="960" class="w-full h-full block cursor-default"></canvas>
+
+            <!-- 3秒緩衝預熱與錄製匯出遮罩 -->
+            <div id="exportOverlay" class="hidden absolute inset-0 bg-slate-950/88 backdrop-blur-sm flex flex-col items-center justify-center p-5 text-center z-20">
+              <!-- 預熱倒數階段 -->
+              <div id="warmupStage" class="flex flex-col items-center">
+                <div class="w-16 h-16 rounded-full bg-orange-500/20 border-2 border-orange-500 flex items-center justify-center mb-3 shadow-lg shadow-orange-500/30">
+                  <span id="warmupCountdownNum" class="text-3xl font-bold text-orange-400 font-mono">3</span>
+                </div>
+                <p class="text-sm font-bold text-white mb-1">3 秒防卡頓緩衝預熱中</p>
+                <p class="text-xs text-slate-300 leading-relaxed">正在預熱編碼器與緩衝第 1 段素材，防止開頭卡頓...</p>
+              </div>
+              <!-- 正式錄製階段 -->
+              <div id="recordingStage" class="hidden flex-col items-center">
+                <div class="w-11 h-11 border-4 border-orange-500/30 border-t-orange-500 rounded-full animate-spin mb-3"></div>
+                <p class="text-sm font-bold text-white mb-1">正在高畫質錄製匯出...</p>
+                <p id="exportPercentText" class="text-2xl font-bold text-orange-400 font-mono">0%</p>
+                <p class="text-[11px] text-slate-400 mt-2">1080×1920・10 Mbps・請保持此分頁在前景</p>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- 播放進度條與控制鍵 -->
-        <div class="w-full mt-4 space-y-2.5">
+        <!-- 選中物件快捷排版工具列 -->
+        <div id="layoutToolbar" class="w-full mt-3 p-2.5 rounded-xl bg-studio-card/80 border border-studio-border flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-1.5 min-w-0">
+            <span class="text-[11px] text-slate-400 shrink-0">選中物件：</span>
+            <span id="selectedOverlayName" class="text-xs font-bold text-orange-300 truncate">尚未點選（點擊畫面文字/圖）</span>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button id="btnCenterX" disabled class="px-2.5 py-1 rounded-lg bg-studio-bg hover:bg-slate-700 disabled:opacity-40 text-[11px] font-medium text-slate-200 border border-studio-border transition cursor-pointer">水平置中</button>
+            <button id="btnResetPos" disabled class="px-2.5 py-1 rounded-lg bg-studio-bg hover:bg-slate-700 disabled:opacity-40 text-[11px] font-medium text-slate-200 border border-studio-border transition cursor-pointer">重置位置</button>
+          </div>
+        </div>
+
+        <!-- 時間軸進度條與播放控制 -->
+        <div class="w-full mt-3 space-y-2.5">
           <div id="timelineBar" class="w-full h-2 bg-studio-card rounded-full overflow-hidden cursor-pointer relative border border-studio-border">
             <div id="timelineProgress" class="h-full bg-gradient-to-r from-orange-500 to-amber-400 w-0 transition-[width] duration-75"></div>
           </div>
-          <div class="flex items-center justify-center gap-3">
-            <button id="btnRestart" title="回到開頭" class="p-2.5 rounded-xl bg-studio-card hover:bg-slate-700 text-slate-200 border border-studio-border transition cursor-pointer">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-              </svg>
+
+          <div class="grid grid-cols-2 gap-2">
+            <button id="btnPreviewCurrent" class="py-2 px-3 rounded-xl bg-studio-card hover:bg-slate-700 text-slate-100 border border-studio-border font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer">
+              <svg class="w-3.5 h-3.5 text-orange-400" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              預覽目前片段
             </button>
-            <button id="btnPlayPause" class="px-6 py-2.5 rounded-xl bg-white hover:bg-slate-200 text-slate-950 font-bold text-sm flex items-center gap-2 shadow-lg transition cursor-pointer">
-              <svg id="iconPlay" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-              <svg id="iconPause" class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-              <span id="playPauseText">預覽播放</span>
+            <button id="btnPlayFull" class="py-2 px-3 rounded-xl bg-white hover:bg-slate-200 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-md transition cursor-pointer">
+              <svg id="iconPlay" class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              <svg id="iconPause" class="w-3.5 h-3.5 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+              <span id="playFullText">從頭完整播放</span>
             </button>
           </div>
         </div>
       </div>
 
-      <!-- 節奏與音樂設定 -->
-      <div class="bg-studio-panel border border-studio-border rounded-2xl p-4 shadow-xl space-y-4">
-        <div class="flex items-center justify-between">
+      <!-- 音樂與雙軌混音面板 -->
+      <div class="bg-studio-panel border border-studio-border rounded-2xl p-4 shadow-xl space-y-3.5">
+        <div class="flex items-center justify-between gap-2">
           <h3 class="text-sm font-bold text-white flex items-center gap-2">
             <svg class="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M9 9l10.5-3m0 6.553v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 11-.99-3.467l2.31-.66a2.25 2.25 0 001.632-2.163zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 01-.99-3.467l2.31-.66A2.25 2.25 0 009 15.553z" />
             </svg>
-            節奏與背景音樂 (BGM)
+            音樂節奏與雙軌混音
           </h3>
-          <span id="bgmStatusBadge" class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">內建輕快節奏</span>
+          <span id="bgmStatusBadge" class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 truncate max-w-[140px]">內建 120 BPM</span>
         </div>
 
-        <!-- 音樂選擇按鈕 -->
         <div class="grid grid-cols-2 gap-2">
           <label class="px-3 py-2 rounded-xl bg-studio-card hover:bg-slate-700/80 border border-studio-border text-xs font-medium text-center cursor-pointer transition flex items-center justify-center gap-1.5">
             <input id="bgmInput" type="file" accept="audio/*" class="hidden" />
-            <svg class="w-4 h-4 text-orange-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <svg class="w-3.5 h-3.5 text-orange-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
             </svg>
-            上傳自訂音樂
+            上傳 MP3/WAV
           </label>
           <button id="btnBuiltinBgm" class="px-3 py-2 rounded-xl bg-orange-500/15 hover:bg-orange-500/25 border border-orange-500/40 text-orange-300 text-xs font-medium transition cursor-pointer flex items-center justify-center gap-1.5">
-            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-            </svg>
-            免上傳輕快 BGM
+            內建輕快 BGM
           </button>
         </div>
 
-        <!-- 自動偵測 BPM -->
-        <button id="btnDetectBpm" class="w-full py-2 rounded-xl bg-studio-card hover:bg-slate-700/80 border border-studio-border text-xs font-semibold text-cyan-300 transition flex items-center justify-center gap-1.5 cursor-pointer">
+        <button id="btnDetectBpm" class="w-full py-2 rounded-xl bg-studio-card hover:bg-slate-700/80 border border-studio-border text-xs font-bold text-cyan-300 transition flex items-center justify-center gap-1.5 cursor-pointer">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
           </svg>
-          自動偵測音樂節拍 (Auto-BPM) 並對齊秒數
+          自動偵測節拍 (Auto-BPM) 並套用全片時長
         </button>
 
-        <!-- 節奏預設與秒數滑桿 -->
-        <div class="space-y-2 pt-1 border-t border-studio-border/60">
-          <div class="flex items-center justify-between text-xs">
-            <span class="text-slate-300 font-medium">剪輯快切節奏</span>
-            <span id="rhythmSecLabel" class="font-mono text-orange-400 font-bold">1.0 秒 / 鏡</span>
-          </div>
-          <div class="grid grid-cols-3 gap-1.5">
-            <button data-rhythm="0.8" class="rhythm-preset py-1.5 rounded-lg text-xs font-medium bg-studio-card hover:bg-slate-700 border border-studio-border text-slate-300 transition cursor-pointer">超快閃 0.8s</button>
-            <button data-rhythm="1.0" class="rhythm-preset py-1.5 rounded-lg text-xs font-medium bg-orange-500/20 border border-orange-500 text-orange-300 transition cursor-pointer">輕快標準 1.0s</button>
-            <button data-rhythm="1.4" class="rhythm-preset py-1.5 rounded-lg text-xs font-medium bg-studio-card hover:bg-slate-700 border border-studio-border text-slate-300 transition cursor-pointer">悠閒風景 1.4s</button>
-          </div>
-          <div class="flex items-center gap-2 pt-1">
-            <input id="rhythmSlider" type="range" min="0.5" max="2.5" step="0.1" value="1.0" class="flex-1" />
-            <button id="btnApplyRhythmAll" class="px-2.5 py-1 rounded-lg bg-studio-card hover:bg-orange-500 hover:text-white border border-studio-border text-[11px] font-medium text-slate-200 transition cursor-pointer shrink-0">套用全部</button>
-          </div>
-        </div>
-
-        <!-- 雙軌混音滑桿 -->
-        <div class="space-y-3 pt-2 border-t border-studio-border/60">
-          <div class="text-xs font-medium text-slate-300 flex items-center justify-between">
-            <span>雙軌混音（臨場感秘訣）</span>
-            <span class="text-[11px] text-slate-500">結尾自動淡出 1 秒</span>
-          </div>
+        <!-- 雙軌音量滑桿 -->
+        <div class="space-y-2.5 pt-2 border-t border-studio-border/60">
           <div class="space-y-1">
-            <div class="flex justify-between text-xs text-slate-400">
-              <span>現場原音音量（海浪/笑聲/美食聲）</span>
-              <span id="origVolLabel" class="font-mono text-slate-200">35%</span>
+            <div class="flex justify-between text-xs text-slate-300">
+              <span>現場原音音量（人聲/乾杯/海浪）</span>
+              <span id="origVolLabel" class="font-mono text-orange-300 font-bold">35%</span>
             </div>
             <input id="origVolSlider" type="range" min="0" max="100" value="35" class="w-full" />
           </div>
           <div class="space-y-1">
-            <div class="flex justify-between text-xs text-slate-400">
+            <div class="flex justify-between text-xs text-slate-300">
               <span>背景音樂音量 (BGM)</span>
-              <span id="bgmVolLabel" class="font-mono text-slate-200">65%</span>
+              <span id="bgmVolLabel" class="font-mono text-orange-300 font-bold">65%</span>
             </div>
             <input id="bgmVolSlider" type="range" min="0" max="100" value="65" class="w-full" />
           </div>
-        </div>
-      </div>
-
-      <!-- 視覺與品牌設定 -->
-      <div class="bg-studio-panel border border-studio-border rounded-2xl p-4 shadow-xl space-y-3.5">
-        <h3 class="text-sm font-bold text-white flex items-center gap-2">
-          <svg class="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
-          </svg>
-          視覺與品牌設定
-        </h3>
-
-        <!-- 字幕垂直位置 -->
-        <div class="space-y-1">
-          <div class="flex justify-between text-xs text-slate-400">
-            <span>極簡白字字幕位置（建議 35% 避開按鈕）</span>
-            <span id="subPosLabel" class="font-mono text-slate-200">35%</span>
-          </div>
-          <input id="subPosSlider" type="range" min="20" max="75" value="35" class="w-full" />
         </div>
 
         <!-- 旅遊增豔調色開關 -->
         <label class="flex items-center justify-between p-2.5 rounded-xl bg-studio-card/70 border border-studio-border cursor-pointer">
           <div>
-            <p class="text-xs font-semibold text-slate-200">旅遊增豔調色濾鏡</p>
-            <p class="text-[11px] text-slate-400">微幅提升對比與飽和度，風景美食更誘人</p>
+            <p class="text-xs font-bold text-slate-200">旅遊增豔調色濾鏡</p>
+            <p class="text-[11px] text-slate-400">微幅提升對比與飽和度，美食風景更鮮明</p>
           </div>
           <input id="filterToggle" type="checkbox" checked class="w-4 h-4 accent-orange-500 rounded cursor-pointer" />
         </label>
 
-        <!-- 品牌浮水印 -->
-        <div class="space-y-1">
-          <label for="watermarkInput" class="text-xs text-slate-400">旅行社浮水印（選填，顯示於左上角）</label>
-          <input id="watermarkInput" type="text" placeholder="例如：漫遊旅行社・精選行程" class="w-full px-3 py-2 rounded-xl bg-studio-bg border border-studio-border text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition" />
+        <!-- 開頭大字 Hook 開關 -->
+        <label class="flex items-center justify-between p-2.5 rounded-xl bg-studio-card/70 border border-studio-border cursor-pointer">
+          <div>
+            <p class="text-xs font-bold text-slate-200">開頭大字 Hook（第 1 鏡強調）</p>
+            <p class="text-[11px] text-slate-400">自動放大第 1 段主字幕，前 2 秒吸住眼球</p>
+          </div>
+          <input id="hookToggle" type="checkbox" checked class="w-4 h-4 accent-orange-500 rounded cursor-pointer" />
+        </label>
+
+        <!-- 預設第一字幕位置 (X, Y) 共用設定 -->
+        <div class="p-2.5 rounded-xl bg-studio-card/70 border border-studio-border space-y-2">
+          <div class="flex items-center justify-between">
+            <p class="text-xs font-bold text-slate-200">預設第 1 段字幕位置（共用）</p>
+            <span class="text-[10px] text-slate-400">新素材預設套用</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <label class="flex items-center justify-between bg-studio-bg px-2.5 py-1.5 rounded-lg border border-studio-border">
+              <span class="text-slate-400">X 水平%</span>
+              <input id="defaultSubX" type="number" min="5" max="95" value="50" class="w-12 bg-transparent text-white font-mono text-right focus:outline-none" />
+            </label>
+            <label class="flex items-center justify-between bg-studio-bg px-2.5 py-1.5 rounded-lg border border-studio-border">
+              <span class="text-slate-400">Y 垂直%</span>
+              <input id="defaultSubY" type="number" min="5" max="95" value="35" class="w-12 bg-transparent text-white font-mono text-right focus:outline-none" />
+            </label>
+          </div>
+          <button id="btnApplyDefaultSubPos" class="w-full py-1.5 rounded-lg bg-studio-bg hover:bg-orange-500/20 text-orange-300 border border-orange-500/40 text-xs font-bold transition cursor-pointer">
+            一鍵套用到目前全部片段
+          </button>
         </div>
       </div>
 
-      <!-- 匯出面板 -->
+      <!-- 一鍵匯出區塊 -->
       <div class="bg-studio-panel border border-studio-border rounded-2xl p-4 shadow-xl space-y-3">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-bold text-slate-300">匯出畫質</span>
-          <select id="resolutionSelect" class="bg-studio-card border border-studio-border text-xs text-white rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-orange-500 cursor-pointer">
-            <option value="720x1280" selected>720 × 1280 (HD 快速匯出)</option>
-            <option value="1080x1920">1080 × 1920 (Full HD 高畫質)</option>
+        <div class="flex items-center justify-between gap-2 text-xs">
+          <span class="text-slate-400 shrink-0">匯出解析度</span>
+          <select id="exportResSelect" class="bg-studio-card border border-studio-border text-emerald-400 font-mono font-bold text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-orange-500 cursor-pointer">
+            <option value="720p" selected>720×1280（標準流暢・5 Mbps）</option>
+            <option value="1080p">1080×1920（高畫質・10 Mbps）</option>
           </select>
         </div>
-
         <button id="btnExportMain" class="w-full py-3 rounded-xl font-bold text-sm bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg shadow-orange-500/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
           </svg>
-          一鍵匯出短影音
+          一鍵匯出短影音（含 3 秒防卡頓緩衝）
         </button>
 
-        <!-- 匯出進度條 -->
         <div id="exportProgressWrap" class="hidden space-y-1.5">
           <div class="flex justify-between text-xs">
-            <span id="exportStatusText" class="text-orange-400 font-medium">準備中...</span>
+            <span id="exportStatusText" class="text-orange-400 font-medium">預熱緩衝中...</span>
             <span id="exportBarPercent" class="font-mono text-slate-300">0%</span>
           </div>
           <div class="w-full h-2 bg-studio-bg rounded-full overflow-hidden border border-studio-border">
@@ -369,29 +372,51 @@
     </aside>
   </main>
 
-  <!-- 隱藏的媒體暫存容器 -->
+  <!-- 隱藏的媒體暫存池 -->
   <div id="hiddenMediaPool" class="hidden"></div>
 
   <script>
     /**
      * ============================================================================
-     * 旅行社短影音快剪工具 (9:16 踩點宣傳版)
-     * 純前端架構：HTML5 Canvas + Web Audio API + MediaRecorder
+     * 旅行社短影音快剪工具 V2 (單頁純前端版)
+     * 核心特色：
+     * 1. 3秒防卡頓緩衝預熱匯出引擎 (1080x1920, 10 Mbps)
+     * 2. 每段支援多組獨立字幕 + 多張自訂插圖/貼圖
+     * 3. 右側 9:16 預覽畫布直接滑鼠/觸控拖曳定位 + 虛線選取框
+     * 4. 銳利 700 Bold 中文字體渲染 + 乾淨微陰影 (不糊字)
      * ============================================================================
      */
 
-    // --- 狀態管理 ---
+    // 匯出固定高畫質參數
+    let EXPORT_W = 720;
+    let EXPORT_H = 1280;
+    let EXPORT_BITRATE = 5_000_000; // 預設 720p 5 Mbps
+    // 字幕樣式設定
+    const SUBTITLE_STYLES = {
+      white_shadow: { label: '極簡白字微陰影' },
+      pink_tag:     { label: '粉底白字標籤' },
+      dark_pill:    { label: '黑底半透明' },
+      yellow_shadow:{ label: '黃字微陰影' },
+    };
+
+    // --- 全域狀態 ---
     const state = {
-      clips: [],             // 每個物件：{ id, type ('video'|'image'), name, url, element, thumbUrl, mediaDuration, startTime, duration, text, isHook, audioSourceNode, gainNode }
-      globalRhythm: 1.0,     // 預設每鏡秒數
-      origVolume: 0.35,      // 現場原音音量 (0~1)
-      bgmVolume: 0.65,       // BGM 音量 (0~1)
-      subtitlePosPct: 35,    // 字幕距離頂部百分比
+      clips: [],              // 分鏡陣列
+      selectedClipId: null,   // 目前正在編輯排版的分鏡 ID
+      selectedOverlay: null,  // { kind: 'subtitle'|'image', id: string }
+      hoveredOverlay: null,   // { kind: 'subtitle'|'image', id: string }
+      dragging: null,         // { kind, id, offsetX, offsetY }
+      globalRhythm: 1.5,      // 預設單鏡時長
+      origVolume: 0.35,       // 現場原音 35%
+      bgmVolume: 0.65,        // BGM 65%
       enableColorFilter: true,
-      watermarkText: '',
-      bgmBuffer: null,       // Web Audio AudioBuffer
-      bgmName: '內建輕快節奏 BGM (120 BPM)',
+      enableHookBigText: true,
+      defaultSubX: 0.5,
+      defaultSubY: 0.35,
+      bgmBuffer: null,
+      bgmName: '內建 120 BPM',
       isPlaying: false,
+      playEndLimit: null,     // 若只預覽單一片段，設定停止時間點
       isExporting: false,
       currentTime: 0,
       lastFrameTs: 0,
@@ -399,24 +424,17 @@
       activeClipId: null,
     };
 
-    // Web Audio 全域物件（於使用者互動時初始化）
+    // 暫存當前畫布上各個覆蓋物件的邊界框，供點擊與拖曳 Hit-Test 使用
+    let currentHitBoxes = [];
+
+    // Web Audio 節點
     let audioCtx = null;
     let masterVideoGain = null;
     let bgmGainNode = null;
     let bgmSourceNode = null;
     let exportAudioDest = null;
 
-    // 旅遊爆款文案模板
-    const VIRAL_TEMPLATES = [
-      "價格太扯！？\n一天玩遍這 5 個秘境",
-      "專車接送免煩惱\n上車睡覺下車拍照",
-      "第一站直衝絕美海景\n隨手拍都是明信片",
-      "在地人私藏必吃美食\n這一口真的太犯規...",
-      "超鬆弛渡假氛圍\n完全不想回家了！",
-      "完整行程與優惠價\n點主頁連結看詳情！"
-    ];
-
-    // --- DOM 元素參照 ---
+    // DOM 參照
     const els = {
       dropZone: document.getElementById('dropZone'),
       mediaInput: document.getElementById('mediaInput'),
@@ -425,35 +443,36 @@
       clipCountBadge: document.getElementById('clipCountBadge'),
       btnClearClips: document.getElementById('btnClearClips'),
       btnLoadDemo: document.getElementById('btnLoadDemo'),
-      btnApplyTemplate: document.getElementById('btnApplyTemplate'),
+      btnEmptyDemo: document.getElementById('btnEmptyDemo'),
       previewCanvas: document.getElementById('previewCanvas'),
+      previewModeDot: document.getElementById('previewModeDot'),
+      previewModeLabel: document.getElementById('previewModeLabel'),
+      timecodeDisplay: document.getElementById('timecodeDisplay'),
       timelineBar: document.getElementById('timelineBar'),
       timelineProgress: document.getElementById('timelineProgress'),
-      timecodeDisplay: document.getElementById('timecodeDisplay'),
-      btnPlayPause: document.getElementById('btnPlayPause'),
-      btnRestart: document.getElementById('btnRestart'),
+      selectedOverlayName: document.getElementById('selectedOverlayName'),
+      btnCenterX: document.getElementById('btnCenterX'),
+      btnResetPos: document.getElementById('btnResetPos'),
+      btnPreviewCurrent: document.getElementById('btnPreviewCurrent'),
+      btnPlayFull: document.getElementById('btnPlayFull'),
       iconPlay: document.getElementById('iconPlay'),
       iconPause: document.getElementById('iconPause'),
-      playPauseText: document.getElementById('playPauseText'),
+      playFullText: document.getElementById('playFullText'),
       bgmInput: document.getElementById('bgmInput'),
       btnBuiltinBgm: document.getElementById('btnBuiltinBgm'),
       btnDetectBpm: document.getElementById('btnDetectBpm'),
       bgmStatusBadge: document.getElementById('bgmStatusBadge'),
-      rhythmSlider: document.getElementById('rhythmSlider'),
-      rhythmSecLabel: document.getElementById('rhythmSecLabel'),
-      btnApplyRhythmAll: document.getElementById('btnApplyRhythmAll'),
       origVolSlider: document.getElementById('origVolSlider'),
       origVolLabel: document.getElementById('origVolLabel'),
       bgmVolSlider: document.getElementById('bgmVolSlider'),
       bgmVolLabel: document.getElementById('bgmVolLabel'),
-      subPosSlider: document.getElementById('subPosSlider'),
-      subPosLabel: document.getElementById('subPosLabel'),
       filterToggle: document.getElementById('filterToggle'),
-      watermarkInput: document.getElementById('watermarkInput'),
-      resolutionSelect: document.getElementById('resolutionSelect'),
       btnHeaderExport: document.getElementById('btnHeaderExport'),
       btnExportMain: document.getElementById('btnExportMain'),
       exportOverlay: document.getElementById('exportOverlay'),
+      warmupStage: document.getElementById('warmupStage'),
+      warmupCountdownNum: document.getElementById('warmupCountdownNum'),
+      recordingStage: document.getElementById('recordingStage'),
       exportPercentText: document.getElementById('exportPercentText'),
       exportProgressWrap: document.getElementById('exportProgressWrap'),
       exportStatusText: document.getElementById('exportStatusText'),
@@ -466,30 +485,52 @@
     const previewCtx = els.previewCanvas.getContext('2d');
 
     // ============================================================================
-    // 1. Toast 通知系統 (取代 alert)
+    // 1. 工具函式與 Toast 通知 (絕不使用 alert)
     // ============================================================================
+    function genId(prefix = 'id') {
+      return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    }
+
     function showToast(message, type = 'info') {
-      const colors = {
-        info: 'bg-slate-800 border-slate-600 text-slate-100',
-        success: 'bg-emerald-950/95 border-emerald-500/50 text-emerald-200',
-        warning: 'bg-amber-950/95 border-amber-500/50 text-amber-200',
-        error: 'bg-rose-950/95 border-rose-500/50 text-rose-200',
+      const styles = {
+        info:    'bg-slate-800/95 border-slate-600 text-slate-100',
+        success: 'bg-emerald-950/95 border-emerald-500/60 text-emerald-200',
+        warning: 'bg-amber-950/95 border-amber-500/60 text-amber-200',
+        error:   'bg-rose-950/95 border-rose-500/60 text-rose-200',
       };
-      const div = document.createElement('div');
-      div.className = `pointer-events-auto px-4 py-3 rounded-xl border shadow-2xl text-xs sm:text-sm font-medium transition-all duration-300 transform translate-y-2 opacity-0 ${colors[type] || colors.info}`;
-      div.textContent = message;
-      els.toastContainer.appendChild(div);
-      requestAnimationFrame(() => {
-        div.classList.remove('translate-y-2', 'opacity-0');
-      });
+      const el = document.createElement('div');
+      el.className = `pointer-events-auto px-4 py-3 rounded-xl border shadow-2xl text-xs sm:text-sm font-medium transition-all duration-300 translate-y-2 opacity-0 ${styles[type] || styles.info}`;
+      el.textContent = message;
+      els.toastContainer.appendChild(el);
+      requestAnimationFrame(() => el.classList.remove('translate-y-2', 'opacity-0'));
       setTimeout(() => {
-        div.classList.add('opacity-0', '-translate-y-2');
-        setTimeout(() => div.remove(), 300);
+        el.classList.add('opacity-0', '-translate-y-2');
+        setTimeout(() => el.remove(), 300);
       }, 3200);
     }
 
+    function escapeHtml(str = '') {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function createDefaultSubtitle(text = '', index = 0) {
+      const yPresets = [state.defaultSubY, 0.56, 0.72, 0.22];
+      return {
+        id: genId('sub'),
+        text,
+        fontSize: index === 0 ? 64 : 50,
+        style: index === 0 ? 'white_shadow' : 'pink_tag',
+        x: index === 0 ? state.defaultSubX : 0.5,
+        y: yPresets[index % yPresets.length],
+      };
+    }
+
     // ============================================================================
-    // 2. Web Audio API 初始化與內建輕快節奏 BGM 合成器
+    // 2. Web Audio 雙軌混音與內建 120 BPM 輕快 BGM 合成器
     // ============================================================================
     function ensureAudioContext() {
       if (!audioCtx) {
@@ -511,21 +552,19 @@
     }
 
     /**
-     * 程式合成 120 BPM 輕快熱帶渡假風 BGM (免外部音檔 URL，100% 離線可用)
-     * 產生 40 秒循環節奏，包含鼓點、輕快撥弦和弦與貝斯線
+     * 離線合成 120 BPM 輕快熱帶渡假風 BGM (免外部音檔)
      */
     function generateUpbeatBgmBuffer() {
       const ctx = ensureAudioContext();
       const sampleRate = ctx.sampleRate;
       const bpm = 120;
-      const beatSec = 60 / bpm; // 0.5 秒一拍
+      const beatSec = 60 / bpm;
       const totalSeconds = 40;
       const length = sampleRate * totalSeconds;
       const buffer = ctx.createBuffer(2, length, sampleRate);
       const left = buffer.getChannelData(0);
       const right = buffer.getChannelData(1);
 
-      // 輕快大調和弦進行: C -> G -> Am -> F (Hz)
       const chords = [
         [261.63, 329.63, 392.00, 523.25], // C
         [196.00, 246.94, 293.66, 392.00], // G
@@ -538,10 +577,9 @@
         const t = i / sampleRate;
         const beatPos = t / beatSec;
         const beatIndex = Math.floor(beatPos);
-        const beatFrac = beatPos - beatIndex; // 0 ~ 1 單拍進度
+        const beatFrac = beatPos - beatIndex;
         const barIndex = Math.floor(beatIndex / 4) % 4;
 
-        // 1. 紮實輕快的四四拍 Kick 鼓點
         let kick = 0;
         if (beatFrac < 0.18) {
           const kEnv = Math.exp(-beatFrac * 24);
@@ -549,19 +587,16 @@
           kick = Math.sin(2 * Math.PI * kFreq * beatFrac * beatSec) * kEnv * 0.42;
         }
 
-        // 2. 反拍清脆 Hi-Hat (在 0.5 拍處)
         let hat = 0;
         const offFrac = (beatPos + 0.5) % 1;
         if (offFrac < 0.06) {
-          const hEnv = Math.exp(-offFrac * 65);
-          hat = (Math.random() * 2 - 1) * hEnv * 0.09;
+          hat = (Math.random() * 2 - 1) * Math.exp(-offFrac * 65) * 0.09;
         }
 
-        // 3. 熱帶木琴/Pluck 和弦節奏 (每半拍切分)
         const eighthPos = t / (beatSec / 2);
         const eighthIdx = Math.floor(eighthPos);
         const eighthFrac = eighthPos - eighthIdx;
-        const pattern = [1, 0, 1, 1, 0, 1, 1, 0]; // 輕快切分節奏
+        const pattern = [1, 0, 1, 1, 0, 1, 1, 0];
         let pluck = 0;
         if (pattern[eighthIdx % 8] === 1 && eighthFrac < 0.7) {
           const pEnv = Math.exp(-eighthFrac * 7.5);
@@ -572,31 +607,26 @@
           pluck *= pEnv;
         }
 
-        // 4. 彈跳感 Bass
         const bassFreq = bassNotes[barIndex];
         const bEnv = Math.exp(-beatFrac * 4.5);
         const bass = (Math.sin(2 * Math.PI * bassFreq * t) + 0.3 * Math.sin(4 * Math.PI * bassFreq * t)) * bEnv * 0.18;
 
-        const mixL = Math.max(-0.95, Math.min(0.95, kick + hat * 0.8 + pluck * 1.05 + bass));
-        const mixR = Math.max(-0.95, Math.min(0.95, kick + hat * 1.1 + pluck * 0.95 + bass));
-        left[i] = mixL;
-        right[i] = mixR;
+        left[i]  = Math.max(-0.95, Math.min(0.95, kick + hat * 0.8 + pluck * 1.05 + bass));
+        right[i] = Math.max(-0.95, Math.min(0.95, kick + hat * 1.1 + pluck * 0.95 + bass));
       }
       return buffer;
     }
 
     /**
-     * 簡易前端節拍偵測 (Auto-BPM)
-     * 透過分析音軌能量峰值間隔推算 BPM，並回傳最適合短影音快切的秒數 (2 拍一刀)
+     * 簡易前端 BPM 偵測，回傳最適合短影音快切的單鏡秒數
      */
     function detectBpmFromBuffer(audioBuffer) {
       const data = audioBuffer.getChannelData(0);
       const sampleRate = audioBuffer.sampleRate;
-      const windowSize = Math.floor(sampleRate * 0.05); // 50ms 視窗
+      const windowSize = Math.floor(sampleRate * 0.05);
       const energies = [];
-
-      // 取前 30 秒分析即可，速度快且精準
       const maxSamples = Math.min(data.length, sampleRate * 30);
+
       for (let i = 0; i < maxSamples; i += windowSize) {
         let sum = 0;
         for (let j = 0; j < windowSize && i + j < maxSamples; j++) {
@@ -605,54 +635,40 @@
         energies.push(sum / windowSize);
       }
 
-      // 找出高於局部平均的鼓點峰值
       const avgEnergy = energies.reduce((a, b) => a + b, 0) / (energies.length || 1);
       const threshold = avgEnergy * 1.45;
-      const peakIndices = [];
+      const peaks = [];
       for (let i = 1; i < energies.length - 1; i++) {
         if (energies[i] > threshold && energies[i] > energies[i - 1] && energies[i] > energies[i + 1]) {
-          if (peakIndices.length === 0 || (i - peakIndices[peakIndices.length - 1]) > 5) {
-            peakIndices.push(i);
-          }
+          if (peaks.length === 0 || (i - peaks[peaks.length - 1]) > 5) peaks.push(i);
         }
       }
+      if (peaks.length < 4) return { bpm: 120, cutSec: 1.0 };
 
-      if (peakIndices.length < 4) {
-        return { bpm: 120, cutSec: 1.0 };
-      }
-
-      // 統計最常見的峰值時間間隔
       const intervals = [];
-      for (let i = 1; i < peakIndices.length; i++) {
-        const sec = (peakIndices[i] - peakIndices[i - 1]) * 0.05;
+      for (let i = 1; i < peaks.length; i++) {
+        const sec = (peaks[i] - peaks[i - 1]) * 0.05;
         if (sec >= 0.3 && sec <= 1.2) intervals.push(sec);
       }
-
       if (intervals.length === 0) return { bpm: 120, cutSec: 1.0 };
       intervals.sort((a, b) => a - b);
-      const medianBeatSec = intervals[Math.floor(intervals.length / 2)];
-      let bpm = Math.round(60 / medianBeatSec);
+      let bpm = Math.round(60 / intervals[Math.floor(intervals.length / 2)]);
       while (bpm < 85) bpm *= 2;
       while (bpm > 165) bpm = Math.round(bpm / 2);
 
-      // 每 2 拍切一個鏡頭，限制在 0.6s ~ 1.6s 之間維持輕快節奏
       let cutSec = (60 / bpm) * 2;
-      cutSec = Math.max(0.6, Math.min(1.6, Math.round(cutSec * 10) / 10));
+      cutSec = Math.max(0.7, Math.min(1.8, Math.round(cutSec * 10) / 10));
       return { bpm, cutSec };
     }
 
     // ============================================================================
-    // 3. 媒體素材載入與管理
+    // 3. 媒體素材匯入、插圖新增與範例體驗
     // ============================================================================
-    function generateId() {
-      return 'clip_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
-    }
-
     async function handleMediaFiles(files) {
       if (!files || files.length === 0) return;
       stopPlayback();
 
-      let addedCount = 0;
+      let count = 0;
       for (const file of files) {
         const isVideo = file.type.startsWith('video/');
         const isImage = file.type.startsWith('image/');
@@ -660,29 +676,22 @@
 
         try {
           const clip = isVideo ? await createVideoClip(file) : await createImageClip(file);
-          // 如果是全片第一個片段，自動開啟「開頭大字 Hook」並給一個示範文案
-          if (state.clips.length === 0) {
-            clip.isHook = true;
-            clip.text = VIRAL_TEMPLATES[0];
-          } else {
-            const tplIdx = state.clips.length;
-            if (tplIdx < VIRAL_TEMPLATES.length) {
-              clip.text = VIRAL_TEMPLATES[tplIdx];
-            }
-          }
           state.clips.push(clip);
-          addedCount++;
+          count++;
         } catch (err) {
-          console.error('載入素材失敗:', file.name, err);
+          console.error(err);
           showToast(`無法讀取素材：${file.name}`, 'error');
         }
       }
 
-      if (addedCount > 0) {
-        renderStoryboard();
-        updateTimelineInfo();
-        renderFrameAt(state.currentTime);
-        showToast(`成功匯入 ${addedCount} 個素材！`, 'success');
+      if (count > 0) {
+        if (!state.selectedClipId && state.clips.length > 0) {
+          selectClipForEditing(state.clips[0].id);
+        } else {
+          renderStoryboard();
+          updateTimelineInfo();
+        }
+        showToast(`成功加入 ${count} 個行程素材！點選卡片即可在右側拖拉排版`, 'success');
       }
     }
 
@@ -699,25 +708,22 @@
 
         video.onloadedmetadata = () => {
           const mediaDuration = isFinite(video.duration) && video.duration > 0 ? video.duration : 5;
-          // 預設從 15% 處開始擷取，避開剛按錄影的手震
           const defaultStart = Math.max(0, Math.min(
-            Math.round(mediaDuration * 0.15 * 10) / 10,
+            Math.round(mediaDuration * 0.1 * 10) / 10,
             Math.max(0, mediaDuration - state.globalRhythm)
           ));
 
-          // 擷取縮圖
           video.currentTime = defaultStart;
           video.onseeked = () => {
             video.onseeked = null;
-            const thumbCanvas = document.createElement('canvas');
-            thumbCanvas.width = 180;
-            thumbCanvas.height = 320;
-            const tCtx = thumbCanvas.getContext('2d');
-            drawCoverMedia(tCtx, video, 180, 320, 1.0);
-            const thumbUrl = thumbCanvas.toDataURL('image/jpeg', 0.75);
+            const tc = document.createElement('canvas');
+            tc.width = 180;
+            tc.height = 320;
+            drawCoverMedia(tc.getContext('2d'), video, 180, 320, 1.0);
+            const thumbUrl = tc.toDataURL('image/jpeg', 0.78);
 
             resolve({
-              id: generateId(),
+              id: genId('clip'),
               type: 'video',
               name: file.name,
               url,
@@ -726,14 +732,14 @@
               mediaDuration,
               startTime: defaultStart,
               duration: Math.min(state.globalRhythm, mediaDuration),
-              text: '',
-              isHook: false,
+              subtitles: [createDefaultSubtitle('', 0)],
+              images: [],
               audioSourceNode: null,
               gainNode: null,
             });
           };
         };
-        video.onerror = () => reject(new Error('影片格式不支援'));
+        video.onerror = () => reject(new Error('影片載入失敗'));
       });
     }
 
@@ -743,15 +749,14 @@
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = () => {
-          const thumbCanvas = document.createElement('canvas');
-          thumbCanvas.width = 180;
-          thumbCanvas.height = 320;
-          const tCtx = thumbCanvas.getContext('2d');
-          drawCoverMedia(tCtx, img, 180, 320, 1.0);
-          const thumbUrl = thumbCanvas.toDataURL('image/jpeg', 0.75);
+          const tc = document.createElement('canvas');
+          tc.width = 180;
+          tc.height = 320;
+          drawCoverMedia(tc.getContext('2d'), img, 180, 320, 1.0);
+          const thumbUrl = tc.toDataURL('image/jpeg', 0.78);
 
           resolve({
-            id: generateId(),
+            id: genId('clip'),
             type: 'image',
             name: file.name,
             url,
@@ -760,86 +765,220 @@
             mediaDuration: 999,
             startTime: 0,
             duration: state.globalRhythm,
-            text: '',
-            isHook: false,
+            subtitles: [createDefaultSubtitle('', 0)],
+            images: [],
             audioSourceNode: null,
             gainNode: null,
           });
         };
-        img.onerror = () => reject(new Error('圖片讀取失敗'));
+        img.onerror = () => reject(new Error('圖片載入失敗'));
         img.src = url;
       });
     }
 
     /**
-     * 產生 5 張高質感旅遊主題範例照片 (純 Canvas 繪製，零外部圖片依賴)
-     * 讓使用者打開網頁就能立即體驗「播放預覽 + 輕快節奏 + 匯出影片」
+     * 為指定分鏡新增一張覆蓋圖片 (Logo、價格貼紙、畫中畫照片)
+     */
+    function addOverlayImageToClip(clipId, file) {
+      const clip = state.clips.find(c => c.id === clipId);
+      if (!clip || !file || !file.type.startsWith('image/')) return;
+
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const overlayImg = {
+          id: genId('img'),
+          name: file.name,
+          url,
+          element: img,
+          x: 0.5,
+          y: 0.68,
+          scale: 0.42,     // 佔畫布寬度比例 (0.15 ~ 0.9)
+          rounded: true,   // 圓角卡片質感 vs 去背無邊框
+        };
+        clip.images.push(overlayImg);
+        state.selectedClipId = clip.id;
+        state.selectedOverlay = { kind: 'image', id: overlayImg.id };
+        renderStoryboard();
+        jumpToClipStart(clip.id);
+        updateSelectedOverlayUI();
+        showToast('已插入圖片！可直接在右側手機畫面上拖曳位置', 'success');
+      };
+      img.onerror = () => showToast('圖片讀取失敗，請確認格式為 JPG/PNG/WebP', 'error');
+      img.src = url;
+    }
+
+    /**
+     * 載入 5 張富士山主題範例素材，並示範「雙段字幕」與「插圖貼紙」
      */
     async function loadDemoClips() {
       stopPlayback();
       const scenes = [
-        { title: '沖繩秘境海灘', colors: ['#0284C7', '#38BDF8', '#FDE047'], emoji: '🏝️', text: '價格太扯！？\n三天兩夜玩遍沖繩秘境', isHook: true },
-        { title: '專車直達飯店', colors: ['#1E3A8A', '#3B82F6', '#93C5FD'], emoji: '🚐', text: '專車接送免自駕\n下飛機直接開玩' },
-        { title: '無邊際海景泳池', colors: ['#0F766E', '#14B8A6', '#FDBA74'], emoji: '🌅', text: '入住海景第一排\n隨手拍都是大片' },
-        { title: '在地必吃海鮮丼', colors: ['#9A3412', '#EA580C', '#FDE047'], emoji: '🍣', text: '在地人私藏美食\n這一口真的太犯規...' },
-        { title: '限時優惠報名', colors: ['#4C1D95', '#7C3AED', '#F472B6'], emoji: '✈️', text: '早鳥優惠倒數中\n點擊主頁看完整行程！' },
+        {
+          title: '河口湖大石公園.jpg',
+          colors: ['#0369A1', '#38BDF8', '#A7F3D0'],
+          emoji: '🗻',
+          subs: [
+            { text: '富士山這樣玩才內行！', style: 'white_shadow', fontSize: 68, x: 0.5, y: 0.32 },
+            { text: '美景美食一次全包', style: 'pink_tag', fontSize: 48, x: 0.5, y: 0.43 },
+          ],
+          addBadge: true,
+        },
+        {
+          title: '北口本宮淺間神社.jpg',
+          colors: ['#14532D', '#15803D', '#86EFAC'],
+          emoji: '⛩️',
+          subs: [
+            { text: '走進千年杉木林\n北口本宮淺間神社', style: 'white_shadow', fontSize: 58, x: 0.5, y: 0.36 },
+          ],
+        },
+        {
+          title: '忍野八海名水.jpg',
+          colors: ['#0F766E', '#06B6D4', '#E0F2FE'],
+          emoji: '💧',
+          subs: [
+            { text: '親手摸超冰富士山雪融水', style: 'white_shadow', fontSize: 56, x: 0.5, y: 0.35 },
+            { text: '📍 山梨・忍野八海', style: 'dark_pill', fontSize: 40, x: 0.5, y: 0.72 },
+          ],
+        },
+        {
+          title: '頂級和牛鍋物.jpg',
+          colors: ['#7C2D12', '#EA580C', '#FDE047'],
+          emoji: '🍲',
+          subs: [
+            { text: '晚上開吃頂級和牛鍋物！', style: 'yellow_shadow', fontSize: 60, x: 0.5, y: 0.35 },
+          ],
+        },
+        {
+          title: '舉杯乾杯導流.jpg',
+          colors: ['#3B0764', '#7E22CE', '#F472B6'],
+          emoji: '🍻',
+          subs: [
+            { text: '想跟這團玩富士山？\n點主頁連結看行程！', style: 'white_shadow', fontSize: 60, x: 0.5, y: 0.38 },
+          ],
+        },
       ];
+
+      // 產生一張示範用「特惠標籤貼圖」
+      const badgeCanvas = document.createElement('canvas');
+      badgeCanvas.width = 420;
+      badgeCanvas.height = 160;
+      const bCtx = badgeCanvas.getContext('2d');
+      bCtx.fillStyle = '#F97316';
+      roundRectPath(bCtx, 8, 8, 404, 144, 28);
+      bCtx.fill();
+      bCtx.lineWidth = 6;
+      bCtx.strokeStyle = '#FFFFFF';
+      bCtx.stroke();
+      bCtx.fillStyle = '#FFFFFF';
+      bCtx.font = '700 46px "PingFang TC", "Noto Sans TC", sans-serif';
+      bCtx.textAlign = 'center';
+      bCtx.textBaseline = 'middle';
+      bCtx.fillText('🔥 限量早鳥團', 210, 82);
+      const badgeBlob = await new Promise(r => badgeCanvas.toBlob(r, 'image/png'));
 
       for (const sc of scenes) {
         const c = document.createElement('canvas');
         c.width = 720;
         c.height = 1280;
         const ctx = c.getContext('2d');
-
-        // 漸層風景背景
         const grad = ctx.createLinearGradient(0, 0, 720, 1280);
         grad.addColorStop(0, sc.colors[0]);
-        grad.addColorStop(0.6, sc.colors[1]);
+        grad.addColorStop(0.55, sc.colors[1]);
         grad.addColorStop(1, sc.colors[2]);
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, 720, 1280);
 
-        // 柔和裝飾光暈
         ctx.fillStyle = 'rgba(255,255,255,0.12)';
         ctx.beginPath();
-        ctx.arc(540, 260, 220, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(160, 960, 260, 0, Math.PI * 2);
+        ctx.arc(540, 240, 210, 0, Math.PI * 2);
         ctx.fill();
 
-        // 底部旅遊卡片裝飾
-        ctx.fillStyle = 'rgba(0,0,0,0.22)';
-        ctx.fillRect(0, 900, 720, 380);
-
-        ctx.font = '140px sans-serif';
+        ctx.font = '150px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(sc.emoji, 360, 720);
+        ctx.fillText(sc.emoji, 360, 770);
 
-        ctx.font = 'bold 38px "Noto Sans TC", sans-serif';
-        ctx.fillStyle = 'rgba(255,255,255,0.85)';
-        ctx.fillText(`範例畫面｜${sc.title}`, 360, 840);
-
-        const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.9));
-        const file = new File([blob], `${sc.title}.jpg`, { type: 'image/jpeg' });
+        const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.9));
+        const file = new File([blob], sc.title, { type: 'image/jpeg' });
         const clip = await createImageClip(file);
-        clip.text = sc.text;
-        clip.isHook = Boolean(sc.isHook);
+        clip.subtitles = sc.subs.map(s => ({ id: genId('sub'), ...s }));
+
+        if (sc.addBadge) {
+          const bUrl = URL.createObjectURL(badgeBlob);
+          const bImg = new Image();
+          await new Promise(res => { bImg.onload = res; bImg.src = bUrl; });
+          clip.images.push({
+            id: genId('img'),
+            name: '早鳥標籤貼圖.png',
+            url: bUrl,
+            element: bImg,
+            x: 0.5,
+            y: 0.66,
+            scale: 0.45,
+            rounded: false,
+          });
+        }
         state.clips.push(clip);
       }
 
-      renderStoryboard();
-      updateTimelineInfo();
-      renderFrameAt(0);
-      showToast('已載入 5 張旅遊範例素材！點右側「預覽播放」馬上聽節奏', 'success');
+      selectClipForEditing(state.clips[0].id);
+      showToast('已載入 5 段富士山範例！可以直接在右側手機畫面拖曳文字與貼圖', 'success');
     }
 
     // ============================================================================
-    // 4. 分鏡列表 UI 渲染與互動
+    // 4. 分鏡選取、時間計算與左側卡片 UI 渲染
     // ============================================================================
     function getTotalDuration() {
-      return state.clips.reduce((sum, c) => sum + c.duration, 0);
+      return state.clips.reduce((acc, c) => acc + c.duration, 0);
+    }
+
+    function getClipGlobalStart(clipId) {
+      let acc = 0;
+      for (const c of state.clips) {
+        if (c.id === clipId) return acc;
+        acc += c.duration;
+      }
+      return 0;
+    }
+
+    function getSelectedClip() {
+      return state.clips.find(c => c.id === state.selectedClipId) || null;
+    }
+
+    function selectClipForEditing(clipId) {
+      stopPlayback();
+      state.selectedClipId = clipId;
+      state.selectedOverlay = null;
+      jumpToClipStart(clipId);
+      renderStoryboard();
+      updateTimelineInfo();
+      updateSelectedOverlayUI();
+    }
+
+    function jumpToClipStart(clipId) {
+      const clip = state.clips.find(c => c.id === clipId);
+      if (!clip) return;
+      state.currentTime = getClipGlobalStart(clipId) + 0.01;
+      if (clip.type === 'video') {
+        const target = Math.min(clip.mediaDuration - 0.05, clip.startTime);
+        if (Math.abs(clip.element.currentTime - target) > 0.05) {
+          clip.element.currentTime = Math.max(0, target);
+          clip.element.onseeked = () => {
+            clip.element.onseeked = null;
+            renderPreviewFrame();
+          };
+        }
+      }
+      renderPreviewFrame();
+    }
+
+    function formatTimecode(sec) {
+      const s = Math.max(0, sec);
+      const mins = Math.floor(s / 60);
+      const rem = (s % 60).toFixed(1).padStart(4, '0');
+      return `${String(mins).padStart(2, '0')}:${rem}`;
     }
 
     function updateTimelineInfo() {
@@ -850,13 +989,6 @@
       updateTimecodeUI();
     }
 
-    function formatTimecode(sec) {
-      const s = Math.max(0, sec);
-      const mins = Math.floor(s / 60);
-      const rem = (s % 60).toFixed(1).padStart(4, '0');
-      return `${String(mins).padStart(2, '0')}:${rem}`;
-    }
-
     function updateTimecodeUI() {
       const total = getTotalDuration();
       els.timecodeDisplay.textContent = `${formatTimecode(state.currentTime)} / ${formatTimecode(total)}`;
@@ -864,126 +996,348 @@
       els.timelineProgress.style.width = `${pct}%`;
     }
 
+    function updateSelectedOverlayUI() {
+      const clip = getSelectedClip();
+      let label = '尚未點選（點擊畫面文字/圖）';
+      let hasSelection = false;
+
+      if (clip && state.selectedOverlay) {
+        if (state.selectedOverlay.kind === 'subtitle') {
+          const idx = clip.subtitles.findIndex(s => s.id === state.selectedOverlay.id);
+          if (idx !== -1) {
+            const s = clip.subtitles[idx];
+            label = `第 ${idx + 1} 段字幕 (X:${Math.round(s.x * 100)}% Y:${Math.round(s.y * 100)}%)`;
+            hasSelection = true;
+          }
+        } else if (state.selectedOverlay.kind === 'image') {
+          const idx = clip.images.findIndex(im => im.id === state.selectedOverlay.id);
+          if (idx !== -1) {
+            const im = clip.images[idx];
+            label = `插圖 #${idx + 1} (X:${Math.round(im.x * 100)}% Y:${Math.round(im.y * 100)}%)`;
+            hasSelection = true;
+          }
+        }
+      }
+
+      els.selectedOverlayName.textContent = label;
+      els.btnCenterX.disabled = !hasSelection;
+      els.btnResetPos.disabled = !hasSelection;
+    }
+
+    /**
+     * 渲染左側分鏡卡片清單
+     */
     function renderStoryboard() {
       els.storyboardList.innerHTML = '';
+
       state.clips.forEach((clip, idx) => {
+        const isSelected = clip.id === state.selectedClipId;
         const card = document.createElement('div');
-        card.className = 'bg-studio-card border border-studio-border rounded-2xl p-3.5 flex gap-3.5 items-start hover:border-slate-600 transition';
+        card.dataset.clipId = clip.id;
+        card.className = `clip-card rounded-2xl p-3.5 sm:p-4 border transition-all cursor-pointer ${
+          isSelected
+            ? 'bg-studio-cardHover border-orange-500 ring-2 ring-orange-500/25 shadow-lg shadow-orange-500/10'
+            : 'bg-studio-card border-studio-border hover:border-slate-500'
+        }`;
+
+        // 組裝該分鏡的所有字幕編輯列
+        const subtitlesHtml = clip.subtitles.map((sub, sIdx) => {
+          const styleOptions = Object.entries(SUBTITLE_STYLES)
+            .map(([k, v]) => `<option value="${k}" ${sub.style === k ? 'selected' : ''}>${v.label}</option>`)
+            .join('');
+
+          return `
+            <div class="p-2.5 rounded-xl bg-studio-bg/85 border border-studio-border/80 space-y-2">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-[11px] font-bold ${sIdx === 0 ? 'text-orange-400' : 'text-cyan-400'}">第 ${sIdx + 1} 段字幕</span>
+                <div class="flex items-center gap-1.5">
+                  <select data-sub-field="style" data-clip-id="${clip.id}" data-sub-id="${sub.id}" class="bg-studio-card border border-studio-border text-[11px] text-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:border-orange-500 cursor-pointer">
+                    ${styleOptions}
+                  </select>
+                  <label class="flex items-center gap-1 text-[11px] text-slate-400 bg-studio-card border border-studio-border rounded-lg px-2 py-1">
+                    <span>字級</span>
+                    <input type="number" data-sub-field="fontSize" data-clip-id="${clip.id}" data-sub-id="${sub.id}" min="28" max="110" step="2" value="${sub.fontSize}" class="w-10 bg-transparent text-white font-mono text-center focus:outline-none" />
+                  </label>
+                  ${clip.subtitles.length > 1 ? `
+                    <button data-action="del-sub" data-clip-id="${clip.id}" data-sub-id="${sub.id}" title="刪除此段字幕" class="p-1 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/15 transition cursor-pointer">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                  ` : ''}
+                </div>
+              </div>
+              <textarea data-sub-field="text" data-clip-id="${clip.id}" data-sub-id="${sub.id}" rows="2" placeholder="輸入這段畫面的短文案..." class="w-full px-3 py-2 rounded-xl bg-studio-panel border border-studio-border text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 resize-none leading-relaxed">${escapeHtml(sub.text)}</textarea>
+            </div>
+          `;
+        }).join('');
+
+        // 組裝該分鏡的所有插圖控制列
+        const imagesHtml = clip.images.length > 0 ? `
+          <div class="space-y-2 pt-1">
+            ${clip.images.map((im, imIdx) => `
+              <div class="p-2.5 rounded-xl bg-studio-bg/85 border border-blue-500/30 flex flex-wrap items-center gap-3">
+                <img src="${im.url}" alt="overlay" class="w-11 h-11 rounded-lg object-contain bg-slate-900 border border-slate-700 shrink-0" />
+                <div class="flex-1 min-w-[140px] space-y-1.5">
+                  <div class="flex items-center justify-between text-[11px]">
+                    <span class="font-bold text-blue-300 truncate max-w-[150px]">插圖 #${imIdx + 1}・${escapeHtml(im.name)}</span>
+                    <span class="font-mono text-slate-400">${Math.round(im.scale * 100)}%</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-[10px] text-slate-400 shrink-0">大小</span>
+                    <input type="range" data-img-field="scale" data-clip-id="${clip.id}" data-img-id="${im.id}" min="15" max="90" value="${Math.round(im.scale * 100)}" class="flex-1" />
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                  <label class="inline-flex items-center gap-1 text-[11px] text-slate-300 cursor-pointer select-none bg-studio-card px-2 py-1 rounded-lg border border-studio-border">
+                    <input type="checkbox" data-img-field="rounded" data-clip-id="${clip.id}" data-img-id="${im.id}" ${im.rounded ? 'checked' : ''} class="accent-blue-500 cursor-pointer" />
+                    <span>圓角卡片</span>
+                  </label>
+                  <button data-action="del-img" data-clip-id="${clip.id}" data-img-id="${im.id}" title="刪除此圖片" class="p-1.5 rounded-lg bg-studio-card hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition cursor-pointer">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        ` : '';
 
         card.innerHTML = `
-          <!-- 縮圖與編號 -->
-          <div class="relative w-16 sm:w-20 aspect-[9/16] rounded-xl overflow-hidden bg-black shrink-0 border border-slate-700">
-            <img src="${clip.thumbUrl}" alt="thumb" class="w-full h-full object-cover" />
-            <span class="absolute top-1 left-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-black/75 text-white font-mono">#${String(idx + 1).padStart(2, '0')}</span>
-            <span class="absolute bottom-1 right-1 text-[10px] font-semibold px-1.5 py-0.5 rounded ${clip.type === 'video' ? 'bg-orange-500/90 text-white' : 'bg-cyan-600/90 text-white'}">${clip.type === 'video' ? '影片' : '照片'}</span>
-          </div>
-
-          <!-- 編輯控制區 -->
-          <div class="flex-1 min-w-0 space-y-2.5">
-            <div class="flex items-center justify-between gap-2">
-              <p class="text-xs font-semibold text-slate-200 truncate" title="${clip.name}">${clip.name}</p>
-              <div class="flex items-center gap-1 shrink-0">
-                <button data-action="up" data-idx="${idx}" ${idx === 0 ? 'disabled' : ''} title="上移" class="p-1.5 rounded-lg bg-studio-bg hover:bg-slate-700 disabled:opacity-30 text-slate-300 transition cursor-pointer">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" /></svg>
-                </button>
-                <button data-action="down" data-idx="${idx}" ${idx === state.clips.length - 1 ? 'disabled' : ''} title="下移" class="p-1.5 rounded-lg bg-studio-bg hover:bg-slate-700 disabled:opacity-30 text-slate-300 transition cursor-pointer">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
-                </button>
-                <button data-action="delete" data-idx="${idx}" title="刪除" class="p-1.5 rounded-lg bg-studio-bg hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition cursor-pointer">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
-                </button>
-              </div>
+          <div class="flex gap-3.5 items-start">
+            <!-- 直式縮圖與標籤 -->
+            <div class="relative w-20 sm:w-24 aspect-[9/16] rounded-xl overflow-hidden bg-black shrink-0 border-2 ${isSelected ? 'border-orange-500' : 'border-slate-700'}">
+              <img src="${clip.thumbUrl}" alt="thumb" class="w-full h-full object-cover" />
+              <span class="absolute top-1.5 left-1.5 text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-slate-900/85 text-white font-mono">#${String(idx + 1).padStart(2, '0')}</span>
+              <span class="absolute bottom-1.5 right-1.5 text-[11px] font-bold px-2 py-0.5 rounded-md shadow ${clip.type === 'video' ? 'bg-orange-500 text-white' : 'bg-blue-500 text-white'}">${clip.type === 'video' ? '影片' : '圖片'}</span>
             </div>
 
-            <!-- 字幕輸入 + Hook 切換 -->
-            <div class="space-y-1.5">
-              <textarea data-field="text" data-idx="${idx}" rows="2" placeholder="輸入這段畫面的短文案（支援換行，建議 6~12 字）" class="w-full px-3 py-2 rounded-xl bg-studio-bg border border-studio-border text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 resize-none leading-relaxed">${clip.text}</textarea>
+            <!-- 右側詳細控制 -->
+            <div class="flex-1 min-w-0 space-y-2.5">
+              <!-- 檔名、時間與排序鍵 -->
               <div class="flex flex-wrap items-center justify-between gap-2">
-                <label class="inline-flex items-center gap-1.5 text-xs cursor-pointer select-none">
-                  <input type="checkbox" data-field="isHook" data-idx="${idx}" ${clip.isHook ? 'checked' : ''} class="w-3.5 h-3.5 accent-orange-500 rounded cursor-pointer" />
-                  <span class="${clip.isHook ? 'text-orange-400 font-bold' : 'text-slate-400'}">開頭大字 Hook</span>
-                </label>
-
-                <div class="flex items-center gap-2 text-xs">
-                  ${clip.type === 'video' ? `
-                    <label class="flex items-center gap-1 text-slate-400" title="從影片第幾秒開始剪">
-                      <span>起點</span>
-                      <input type="number" data-field="startTime" data-idx="${idx}" min="0" max="${Math.max(0, clip.mediaDuration - 0.3).toFixed(1)}" step="0.1" value="${clip.startTime.toFixed(1)}" class="w-14 px-1.5 py-1 rounded-lg bg-studio-bg border border-studio-border text-white font-mono text-center focus:outline-none focus:border-orange-500" />
-                      <span>s</span>
-                    </label>
-                  ` : `<span class="text-[11px] text-cyan-400/90">自動微推進動態</span>`}
-
-                  <label class="flex items-center gap-1 text-slate-400" title="此鏡頭顯示幾秒">
-                    <span>時長</span>
-                    <input type="number" data-field="duration" data-idx="${idx}" min="0.4" max="${clip.type === 'video' ? Math.min(10, clip.mediaDuration).toFixed(1) : '8.0'}" step="0.1" value="${clip.duration.toFixed(1)}" class="w-14 px-1.5 py-1 rounded-lg bg-studio-bg border border-studio-border text-orange-300 font-mono font-bold text-center focus:outline-none focus:border-orange-500" />
-                    <span>s</span>
-                  </label>
+                <div class="flex items-center gap-2 min-w-0">
+                  <p class="text-xs sm:text-sm font-bold text-white truncate max-w-[180px] sm:max-w-[260px]" title="${escapeHtml(clip.name)}">${escapeHtml(clip.name)}</p>
+                  ${isSelected ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-300 border border-orange-500/40 shrink-0">排版中</span>' : ''}
                 </div>
+                <div class="flex items-center gap-1 shrink-0">
+                  <button data-action="up" data-idx="${idx}" ${idx === 0 ? 'disabled' : ''} title="上移" class="p-1.5 rounded-lg bg-studio-bg hover:bg-slate-700 disabled:opacity-30 text-slate-300 transition cursor-pointer">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" /></svg>
+                  </button>
+                  <button data-action="down" data-idx="${idx}" ${idx === state.clips.length - 1 ? 'disabled' : ''} title="下移" class="p-1.5 rounded-lg bg-studio-bg hover:bg-slate-700 disabled:opacity-30 text-slate-300 transition cursor-pointer">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                  </button>
+                  <button data-action="delete" data-idx="${idx}" title="刪除此片段" class="p-1.5 rounded-lg bg-studio-bg hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition cursor-pointer">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 起點秒數與片段時長 -->
+              <div class="flex flex-wrap items-center gap-3 text-xs">
+                ${clip.type === 'video' ? `
+                  <label class="flex items-center gap-1.5 text-slate-300 bg-studio-bg px-2.5 py-1 rounded-lg border border-studio-border">
+                    <span class="text-slate-400">起始秒數</span>
+                    <input type="number" data-clip-field="startTime" data-clip-id="${clip.id}" min="0" max="${Math.max(0, clip.mediaDuration - 0.3).toFixed(1)}" step="0.1" value="${clip.startTime.toFixed(1)}" class="w-12 bg-transparent text-white font-mono text-center focus:outline-none" />
+                    <span class="text-slate-500">s</span>
+                  </label>
+                ` : `<span class="text-[11px] text-blue-300 bg-blue-500/10 border border-blue-500/25 px-2.5 py-1 rounded-lg">照片自動微推鏡頭</span>`}
+
+                <label class="flex items-center gap-1.5 text-slate-300 bg-studio-bg px-2.5 py-1 rounded-lg border border-studio-border">
+                  <span class="text-slate-400">片段時長</span>
+                  <input type="number" data-clip-field="duration" data-clip-id="${clip.id}" min="0.4" max="${clip.type === 'video' ? Math.min(12, clip.mediaDuration).toFixed(1) : '10.0'}" step="0.1" value="${clip.duration.toFixed(1)}" class="w-12 bg-transparent text-orange-400 font-mono font-bold text-center focus:outline-none" />
+                  <span class="text-slate-500">s</span>
+                </label>
+              </div>
+
+              <!-- 字幕編輯區 -->
+              <div class="space-y-2">${subtitlesHtml}</div>
+
+              <!-- 插入圖片列表 -->
+              ${imagesHtml}
+
+              <!-- 明確的兩大新增按鈕 -->
+              <div class="flex flex-wrap items-center gap-2 pt-1">
+                <button data-action="add-sub" data-clip-id="${clip.id}" class="px-3 py-1.5 rounded-xl bg-studio-bg hover:bg-orange-500/20 text-orange-300 border border-orange-500/40 text-xs font-bold transition flex items-center gap-1 cursor-pointer">
+                  ＋ 加入第二段字幕
+                </button>
+                <label class="px-3 py-1.5 rounded-xl bg-studio-bg hover:bg-blue-500/20 text-blue-300 border border-blue-500/40 text-xs font-bold transition flex items-center gap-1 cursor-pointer">
+                  <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-action="upload-overlay-img" data-clip-id="${clip.id}" class="hidden" />
+                  ＋ 加入新增圖片
+                </label>
               </div>
             </div>
           </div>
         `;
+
         els.storyboardList.appendChild(card);
       });
     }
 
-    // 分鏡卡片事件委派
+    // --- 分鏡列表事件委派 ---
     els.storyboardList.addEventListener('click', (e) => {
       const btn = e.target.closest('button[data-action]');
-      if (!btn) return;
-      const idx = Number(btn.dataset.idx);
-      const action = btn.dataset.action;
-      stopPlayback();
+      if (btn) {
+        e.stopPropagation();
+        const action = btn.dataset.action;
+        const idx = Number(btn.dataset.idx);
+        const clipId = btn.dataset.clipId;
 
-      if (action === 'up' && idx > 0) {
-        [state.clips[idx - 1], state.clips[idx]] = [state.clips[idx], state.clips[idx - 1]];
-      } else if (action === 'down' && idx < state.clips.length - 1) {
-        [state.clips[idx + 1], state.clips[idx]] = [state.clips[idx], state.clips[idx + 1]];
-      } else if (action === 'delete') {
-        const removed = state.clips.splice(idx, 1)[0];
-        if (removed && removed.type === 'video' && removed.element) {
-          removed.element.pause();
-          removed.element.remove();
+        if (action === 'up' && idx > 0) {
+          stopPlayback();
+          [state.clips[idx - 1], state.clips[idx]] = [state.clips[idx], state.clips[idx - 1]];
+          renderStoryboard();
+          updateTimelineInfo();
+          renderPreviewFrame();
+        } else if (action === 'down' && idx < state.clips.length - 1) {
+          stopPlayback();
+          [state.clips[idx + 1], state.clips[idx]] = [state.clips[idx], state.clips[idx + 1]];
+          renderStoryboard();
+          updateTimelineInfo();
+          renderPreviewFrame();
+        } else if (action === 'delete') {
+          stopPlayback();
+          const removed = state.clips.splice(idx, 1)[0];
+          if (removed) {
+            if (removed.type === 'video' && removed.element) {
+              removed.element.pause();
+              removed.element.remove();
+            }
+            if (removed.url) URL.revokeObjectURL(removed.url);
+            removed.images.forEach(im => URL.revokeObjectURL(im.url));
+          }
+          if (state.selectedClipId === removed?.id) {
+            state.selectedClipId = state.clips[0]?.id || null;
+            state.selectedOverlay = null;
+          }
+          state.currentTime = Math.min(state.currentTime, getTotalDuration());
+          renderStoryboard();
+          updateTimelineInfo();
+          updateSelectedOverlayUI();
+          renderPreviewFrame();
+        } else if (action === 'add-sub') {
+          const clip = state.clips.find(c => c.id === clipId);
+          if (!clip) return;
+          stopPlayback();
+          const newSub = createDefaultSubtitle('', clip.subtitles.length);
+          clip.subtitles.push(newSub);
+          state.selectedClipId = clip.id;
+          state.selectedOverlay = { kind: 'subtitle', id: newSub.id };
+          renderStoryboard();
+          jumpToClipStart(clip.id);
+          updateSelectedOverlayUI();
+          showToast(`已新增第 ${clip.subtitles.length} 段字幕！可直接輸入文字並在右側拖曳位置`, 'success');
+        } else if (action === 'del-sub') {
+          const clip = state.clips.find(c => c.id === clipId);
+          if (!clip || clip.subtitles.length <= 1) return;
+          clip.subtitles = clip.subtitles.filter(s => s.id !== btn.dataset.subId);
+          if (state.selectedOverlay?.id === btn.dataset.subId) state.selectedOverlay = null;
+          renderStoryboard();
+          updateSelectedOverlayUI();
+          renderPreviewFrame();
+        } else if (action === 'del-img') {
+          const clip = state.clips.find(c => c.id === clipId);
+          if (!clip) return;
+          const targetImg = clip.images.find(im => im.id === btn.dataset.imgId);
+          if (targetImg) URL.revokeObjectURL(targetImg.url);
+          clip.images = clip.images.filter(im => im.id !== btn.dataset.imgId);
+          if (state.selectedOverlay?.id === btn.dataset.imgId) state.selectedOverlay = null;
+          renderStoryboard();
+          updateSelectedOverlayUI();
+          renderPreviewFrame();
         }
-        if (removed && removed.url) URL.revokeObjectURL(removed.url);
+        return;
       }
 
-      state.currentTime = Math.min(state.currentTime, getTotalDuration());
-      renderStoryboard();
-      updateTimelineInfo();
-      renderFrameAt(state.currentTime);
+      // 避免點擊輸入框或 label 時意外重繪導致失去焦點
+      if (e.target.closest('input, textarea, select, label')) {
+        const card = e.target.closest('.clip-card');
+        if (card && card.dataset.clipId !== state.selectedClipId) {
+          state.selectedClipId = card.dataset.clipId;
+          state.selectedOverlay = null;
+          jumpToClipStart(card.dataset.clipId);
+          // 僅更新邊框樣式，不重繪 DOM 保持輸入焦點
+          document.querySelectorAll('.clip-card').forEach(el => {
+            const active = el.dataset.clipId === state.selectedClipId;
+            el.classList.toggle('border-orange-500', active);
+            el.classList.toggle('bg-studio-cardHover', active);
+            el.classList.toggle('ring-2', active);
+            el.classList.toggle('ring-orange-500/25', active);
+          });
+          updateSelectedOverlayUI();
+        }
+        return;
+      }
+
+      // 點擊分鏡卡片本體 -> 選中並切換右側預覽
+      const card = e.target.closest('.clip-card');
+      if (card && card.dataset.clipId) {
+        selectClipForEditing(card.dataset.clipId);
+      }
     });
 
     els.storyboardList.addEventListener('input', (e) => {
-      const target = e.target;
-      const idx = Number(target.dataset.idx);
-      const field = target.dataset.field;
-      if (isNaN(idx) || !field || !state.clips[idx]) return;
+      const t = e.target;
+      const clipId = t.dataset.clipId;
+      const clip = state.clips.find(c => c.id === clipId);
+      if (!clip) return;
 
-      const clip = state.clips[idx];
-      if (field === 'text') {
-        clip.text = target.value;
-      } else if (field === 'isHook') {
-        clip.isHook = target.checked;
-        renderStoryboard();
-      } else if (field === 'startTime') {
-        const val = Math.max(0, parseFloat(target.value) || 0);
-        clip.startTime = Math.min(val, Math.max(0, clip.mediaDuration - 0.3));
-      } else if (field === 'duration') {
-        const val = Math.max(0.4, parseFloat(target.value) || 1.0);
-        clip.duration = clip.type === 'video' ? Math.min(val, clip.mediaDuration) : Math.min(val, 10);
-        updateTimelineInfo();
+      if (t.dataset.clipField) {
+        const field = t.dataset.clipField;
+        if (field === 'startTime') {
+          const val = Math.max(0, parseFloat(t.value) || 0);
+          clip.startTime = Math.min(val, Math.max(0, clip.mediaDuration - 0.3));
+          jumpToClipStart(clip.id);
+        } else if (field === 'duration') {
+          const val = Math.max(0.4, parseFloat(t.value) || 1.0);
+          clip.duration = clip.type === 'video' ? Math.min(val, clip.mediaDuration) : Math.min(val, 10);
+          updateTimelineInfo();
+        }
+      } else if (t.dataset.subField) {
+        const sub = clip.subtitles.find(s => s.id === t.dataset.subId);
+        if (!sub) return;
+        const f = t.dataset.subField;
+        if (f === 'text') sub.text = t.value;
+        else if (f === 'style') sub.style = t.value;
+        else if (f === 'fontSize') sub.fontSize = Math.max(24, Math.min(120, parseInt(t.value, 10) || 56));
+        state.selectedOverlay = { kind: 'subtitle', id: sub.id };
+        updateSelectedOverlayUI();
+        renderPreviewFrame();
+      } else if (t.dataset.imgField) {
+        const im = clip.images.find(i => i.id === t.dataset.imgId);
+        if (!im) return;
+        if (t.dataset.imgField === 'scale') {
+          im.scale = (parseInt(t.value, 10) || 40) / 100;
+          const labelSpan = t.closest('.flex-1')?.querySelector('.font-mono');
+          if (labelSpan) labelSpan.textContent = `${Math.round(im.scale * 100)}%`;
+        } else if (t.dataset.imgField === 'rounded') {
+          im.rounded = t.checked;
+        }
+        state.selectedOverlay = { kind: 'image', id: im.id };
+        updateSelectedOverlayUI();
+        renderPreviewFrame();
       }
-      renderFrameAt(state.currentTime);
+    });
+
+    els.storyboardList.addEventListener('change', (e) => {
+      const t = e.target;
+      if (t.dataset.action === 'upload-overlay-img' && t.files[0]) {
+        addOverlayImageToClip(t.dataset.clipId, t.files[0]);
+        t.value = '';
+      }
     });
 
     // ============================================================================
-    // 5. Canvas 繪圖核心 (9:16 自動滿版裁切、Ken Burns 照片動態、極簡字幕、浮水印)
+    // 5. Canvas 繪圖引擎 (銳利 700 字體、多段字幕、插圖、編輯模式虛線選取框)
     // ============================================================================
+    function roundRectPath(ctx, x, y, w, h, r) {
+      const radius = Math.min(r, w / 2, h / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.arcTo(x + w, y, x + w, y + h, radius);
+      ctx.arcTo(x + w, y + h, x, y + h, radius);
+      ctx.arcTo(x, y + h, x, y, radius);
+      ctx.arcTo(x, y, x + w, y, radius);
+      ctx.closePath();
+    }
 
-    /**
-     * 將任意比例的影片或圖片以 cover 模式置中滿版繪製到目標 Canvas，絕無黑邊或變形
-     */
     function drawCoverMedia(ctx, media, canvasW, canvasH, zoomScale = 1.0) {
       const mW = media.videoWidth || media.naturalWidth || media.width;
       const mH = media.videoHeight || media.naturalHeight || media.height;
@@ -995,76 +1349,166 @@
       const drawH = mH * finalScale;
       const offsetX = (canvasW - drawW) / 2;
       const offsetY = (canvasH - drawH) / 2;
-
       ctx.drawImage(media, offsetX, offsetY, drawW, drawH);
     }
 
     /**
-     * 繪製極簡爆款白字字幕（微陰影、支援多行換行與開頭 Hook 放大）
+     * 繪製單張插入圖片，並回傳其在畫布上的邊界框 (供拖曳選取)
      */
-    function drawSubtitle(ctx, text, isHook, canvasW, canvasH) {
-      if (!text || !text.trim()) return;
-      const lines = text.split('\n').filter(l => l.trim().length > 0);
-      if (lines.length === 0) return;
+    function drawOverlayImage(ctx, im, canvasW, canvasH) {
+      const el = im.element;
+      if (!el || !el.naturalWidth || !el.naturalHeight) return null;
 
-      // 依畫布寬度按比例縮放字體（基準為 1080px）
-      const scale = canvasW / 1080;
-      const fontSize = Math.round((isHook ? 74 : 60) * scale);
-      const lineHeight = Math.round(fontSize * 1.32);
+      const drawW = canvasW * im.scale;
+      const drawH = drawW * (el.naturalHeight / el.naturalWidth);
+      const cx = canvasW * im.x;
+      const cy = canvasH * im.y;
+      const x = cx - drawW / 2;
+      const y = cy - drawH / 2;
+      const scaleRatio = canvasW / 1080;
 
       ctx.save();
-      ctx.font = `700 ${fontSize}px "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif`;
+      if (im.rounded) {
+        const radius = Math.round(24 * scaleRatio);
+        // 卡片立體陰影
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
+        ctx.shadowBlur = Math.round(18 * scaleRatio);
+        ctx.shadowOffsetY = Math.round(6 * scaleRatio);
+        ctx.fillStyle = '#FFFFFF';
+        roundRectPath(ctx, x, y, drawW, drawH, radius);
+        ctx.fill();
+
+        // 裁切圓角並繪製圖片
+        ctx.shadowColor = 'transparent';
+        ctx.save();
+        roundRectPath(ctx, x, y, drawW, drawH, radius);
+        ctx.clip();
+        ctx.drawImage(el, x, y, drawW, drawH);
+        ctx.restore();
+
+        // 精緻白邊
+        ctx.lineWidth = Math.max(1.5, Math.round(4 * scaleRatio));
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+        roundRectPath(ctx, x, y, drawW, drawH, radius);
+        ctx.stroke();
+      } else {
+        ctx.drawImage(el, x, y, drawW, drawH);
+      }
+      ctx.restore();
+
+      return { kind: 'image', id: im.id, x, y, w: drawW, h: drawH, cx, cy };
+    }
+
+    /**
+     * 繪製單段字幕（嚴格使用 700 字重＋乾淨微陰影，不用粗描邊避免糊字）
+     */
+    function drawOverlaySubtitle(ctx, sub, canvasW, canvasH, isHook = false) {
+      if (!sub.text || !sub.text.trim()) return null;
+      const lines = sub.text.split('\n');
+      const scale = canvasW / 1080;
+      const baseSize = isHook ? Math.round(sub.fontSize * 1.25) : sub.fontSize;
+      const fontSize = Math.round(baseSize * scale);
+      const lineHeight = Math.round(fontSize * 1.34);
+
+      ctx.save();
+      // 銳利不糊字體設定：字重 700 (Bold)
+      ctx.font = `700 ${fontSize}px "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
 
-      const startY = canvasH * (state.subtitlePosPct / 100) - ((lines.length - 1) * lineHeight) / 2;
-
-      lines.forEach((line, i) => {
-        const y = startY + i * lineHeight;
-        // 柔和深色微陰影，確保在淺色天空或亮背景上依然清晰銳利
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
-ctx.shadowBlur = 6;
-ctx.shadowOffsetX = 2;
-ctx.shadowOffsetY = 3;
-        ctx.shadowOffsetY = Math.round(4 * scale);
-
-        // 極細深色描邊增加高對比可讀性
-        ctx.lineWidth = Math.max(2, Math.round(5 * scale));
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.45)';
-        ctx.lineJoin = 'round';
-        ctx.strokeText(line, canvasW / 2, y);
-
-        // 純白主字體
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillText(line, canvasW / 2, y);
+      let maxLineW = 0;
+      lines.forEach(line => {
+        const w = ctx.measureText(line).width;
+        if (w > maxLineW) maxLineW = w;
       });
+
+      const cx = canvasW * sub.x;
+      const cy = canvasH * sub.y;
+      const totalH = lines.length * lineHeight;
+      const padX = Math.round(28 * scale);
+      const padY = Math.round(14 * scale);
+
+      // 背景標籤樣式 (粉底白字標籤 / 黑底半透明)
+      if (sub.style === 'pink_tag' || sub.style === 'dark_pill') {
+        const bgW = maxLineW + padX * 2;
+        const bgH = totalH + padY * 1.4;
+        const bgX = cx - bgW / 2;
+        const bgY = cy - bgH / 2;
+        ctx.fillStyle = sub.style === 'pink_tag' ? 'rgba(239, 134, 140, 0.94)' : 'rgba(15, 23, 42, 0.76)';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
+        ctx.shadowBlur = Math.round(10 * scale);
+        ctx.shadowOffsetY = Math.round(3 * scale);
+        roundRectPath(ctx, bgX, bgY, bgW, bgH, Math.round(16 * scale));
+        ctx.fill();
+        ctx.shadowColor = 'transparent';
+      }
+
+      // 繪製文字（使用指定的乾淨微陰影，不呼叫 strokeText）
+      const startY = cy - ((lines.length - 1) * lineHeight) / 2;
+      lines.forEach((line, i) => {
+        const ly = startY + i * lineHeight;
+        if (sub.style === 'white_shadow' || sub.style === 'yellow_shadow') {
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
+          ctx.shadowBlur = Math.max(3, Math.round(6 * scale));
+          ctx.shadowOffsetX = Math.max(1, Math.round(2 * scale));
+          ctx.shadowOffsetY = Math.max(1.5, Math.round(3 * scale));
+        } else {
+          ctx.shadowColor = 'transparent';
+        }
+        ctx.fillStyle = sub.style === 'yellow_shadow' ? '#FDE047' : '#FFFFFF';
+        ctx.fillText(line, cx, ly);
+      });
+
       ctx.restore();
+
+      const boxW = maxLineW + padX * 2;
+      const boxH = totalH + padY * 1.6;
+      return {
+        kind: 'subtitle',
+        id: sub.id,
+        x: cx - boxW / 2,
+        y: cy - boxH / 2,
+        w: boxW,
+        h: boxH,
+        cx,
+        cy,
+      };
     }
 
     /**
-     * 繪製左上角旅行社浮水印
+     * 編輯模式下繪製淡淡的虛線選取框與座標提示 (播放與匯出時自動不顯示)
      */
-    function drawWatermark(ctx, text, canvasW, canvasH) {
-      if (!text || !text.trim()) return;
-      const scale = canvasW / 1080;
-      const fontSize = Math.round(30 * scale);
-      const padX = Math.round(42 * scale);
-      const padY = Math.round(68 * scale);
-
+    function drawSelectionBox(ctx, box, isSelected, canvasW) {
+      const scale = canvasW / 540;
       ctx.save();
-      ctx.font = `600 ${fontSize}px "Noto Sans TC", sans-serif`;
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'top';
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
-      ctx.shadowBlur = Math.round(8 * scale);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.78)';
-      ctx.fillText(text.trim(), padX, padY);
+      ctx.strokeStyle = isSelected ? 'rgba(249, 115, 22, 0.95)' : 'rgba(255, 255, 255, 0.55)';
+      ctx.lineWidth = isSelected ? 2 : 1.5;
+      ctx.setLineDash([6 * scale, 4 * scale]);
+      roundRectPath(ctx, box.x - 4, box.y - 4, box.w + 8, box.h + 8, 8);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // 選中時在左上角顯示座標小標籤
+      if (isSelected) {
+        const pctX = Math.round((box.cx / canvasW) * 100);
+        const pctY = Math.round((box.cy / (canvasW * 16 / 9)) * 100);
+        const tagText = `X:${pctX}%  Y:${pctY}%`;
+        ctx.font = `700 ${Math.round(11 * scale)}px monospace`;
+        const tw = ctx.measureText(tagText).width + 12;
+        const th = 20;
+        const tx = Math.max(6, Math.min(canvasW - tw - 6, box.x - 4));
+        const ty = Math.max(6, box.y - th - 8);
+        ctx.fillStyle = 'rgba(249, 115, 22, 0.92)';
+        roundRectPath(ctx, tx, ty, tw, th, 5);
+        ctx.fill();
+        ctx.fillStyle = '#FFFFFF';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(tagText, tx + 6, ty + th / 2);
+      }
       ctx.restore();
     }
 
-    /**
-     * 依據時間 t 找出目前對應的分鏡與該鏡內部進度
-     */
     function getClipAtTime(t) {
       let acc = 0;
       for (let i = 0; i < state.clips.length; i++) {
@@ -1079,23 +1523,24 @@ ctx.shadowOffsetY = 3;
     }
 
     /**
-     * 將指定時間點的畫面繪製到指定 Canvas
+     * 核心畫面繪製函式 (同時服務預覽畫布與 1080x1920 匯出畫布)
      */
-    function renderFrameToCanvas(ctx, canvasW, canvasH, t) {
+    function renderFrameToCanvas(ctx, canvasW, canvasH, t, showEditGuides = false) {
       ctx.save();
       ctx.fillStyle = '#070A10';
       ctx.fillRect(0, 0, canvasW, canvasH);
 
       if (state.clips.length === 0) {
         ctx.fillStyle = '#64748B';
-        ctx.font = `500 ${Math.round(canvasW * 0.045)}px "Noto Sans TC", sans-serif`;
+        ctx.font = `700 ${Math.round(canvasW * 0.045)}px "PingFang TC", "Noto Sans TC", sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('請先於左側上傳行程素材', canvasW / 2, canvasH / 2 - 14);
+        ctx.fillText('請於左側匯入行程素材', canvasW / 2, canvasH / 2 - 14);
         ctx.fillStyle = '#475569';
-        ctx.font = `400 ${Math.round(canvasW * 0.032)}px "Noto Sans TC", sans-serif`;
-        ctx.fillText('或點「先載入範例素材體驗看看」', canvasW / 2, canvasH / 2 + 24);
+        ctx.font = `500 ${Math.round(canvasW * 0.032)}px "PingFang TC", "Noto Sans TC", sans-serif`;
+        ctx.fillText('或點擊上方「載入範例素材體驗」', canvasW / 2, canvasH / 2 + 24);
         ctx.restore();
+        if (showEditGuides) currentHitBoxes = [];
         return;
       }
 
@@ -1104,34 +1549,168 @@ ctx.shadowOffsetY = 3;
         ctx.restore();
         return;
       }
-      const { clip, localTime } = info;
+      const { clip, index, localTime } = info;
       const progress = clip.duration > 0 ? localTime / clip.duration : 0;
 
-      // 旅遊增豔調色濾鏡
-      if (state.enableColorFilter) {
-        ctx.filter = 'contrast(1.06) saturate(1.18) brightness(1.02)';
-      } else {
-        ctx.filter = 'none';
-      }
-
-      // 照片套用柔和 Ken Burns 微推進效果 (1.0 -> 1.10)
-      const zoom = clip.type === 'image' ? (1.0 + progress * 0.10) : 1.0;
+      // 旅遊增豔調色
+      ctx.filter = state.enableColorFilter ? 'contrast(1.06) saturate(1.16) brightness(1.02)' : 'none';
+      const zoom = clip.type === 'image' ? (1.0 + progress * 0.09) : 1.0;
       drawCoverMedia(ctx, clip.element, canvasW, canvasH, zoom);
-
-      // 清除濾鏡後再繪製字幕與浮水印，確保文字純白不偏色
       ctx.filter = 'none';
-      drawSubtitle(ctx, clip.text, clip.isHook, canvasW, canvasH);
-      drawWatermark(ctx, state.watermarkText, canvasW, canvasH);
+
+      // 先繪製插入圖片，再繪製字幕 (字幕在最上層)
+      const hitBoxes = [];
+      clip.images.forEach(im => {
+        const box = drawOverlayImage(ctx, im, canvasW, canvasH);
+        if (box) hitBoxes.push(box);
+      });
+      clip.subtitles.forEach((sub, sIdx) => {
+        const isHook = state.enableHookBigText && index === 0 && sIdx === 0;
+        const box = drawOverlaySubtitle(ctx, sub, canvasW, canvasH, isHook);
+        if (box) hitBoxes.push(box);
+      });
+
+      // 僅在暫停/編輯模式顯示虛線選取框，播放與匯出絕不錄進去
+      if (showEditGuides && !state.isPlaying && !state.isExporting) {
+        currentHitBoxes = hitBoxes;
+        hitBoxes.forEach(box => {
+          const isSel = state.selectedOverlay && state.selectedOverlay.kind === box.kind && state.selectedOverlay.id === box.id;
+          const isHov = state.hoveredOverlay && state.hoveredOverlay.kind === box.kind && state.hoveredOverlay.id === box.id;
+          if (isSel || isHov) {
+            drawSelectionBox(ctx, box, isSel, canvasW);
+          }
+        });
+      }
       ctx.restore();
     }
 
-    function renderFrameAt(t) {
-      renderFrameToCanvas(previewCtx, els.previewCanvas.width, els.previewCanvas.height, t);
+    function renderPreviewFrame() {
+      const showGuides = !state.isPlaying && !state.isExporting;
+      renderFrameToCanvas(previewCtx, els.previewCanvas.width, els.previewCanvas.height, state.currentTime, showGuides);
       updateTimecodeUI();
     }
 
     // ============================================================================
-    // 6. 影音同步播放引擎 (Web Audio 雙軌混音)
+    // 6. 右側預覽畫布滑鼠/觸控直接拖曳定位
+    // ============================================================================
+    function getCanvasPointerCoords(e) {
+      const rect = els.previewCanvas.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * els.previewCanvas.width;
+      const y = ((e.clientY - rect.top) / rect.height) * els.previewCanvas.height;
+      return { x, y };
+    }
+
+    function hitTestOverlay(px, py) {
+      // 從最上層 (陣列尾端) 往回找，優先選中上層物件
+      for (let i = currentHitBoxes.length - 1; i >= 0; i--) {
+        const b = currentHitBoxes[i];
+        if (px >= b.x - 8 && px <= b.x + b.w + 8 && py >= b.y - 8 && py <= b.y + b.h + 8) {
+          return b;
+        }
+      }
+      return null;
+    }
+
+    els.previewCanvas.addEventListener('pointerdown', (e) => {
+      if (state.isPlaying || state.isExporting || state.clips.length === 0) return;
+      const { x, y } = getCanvasPointerCoords(e);
+      const hit = hitTestOverlay(x, y);
+
+      if (hit) {
+        state.selectedOverlay = { kind: hit.kind, id: hit.id };
+        state.dragging = {
+          kind: hit.kind,
+          id: hit.id,
+          offsetX: x - hit.cx,
+          offsetY: y - hit.cy,
+        };
+        els.previewCanvas.setPointerCapture(e.pointerId);
+        els.previewCanvas.style.cursor = 'grabbing';
+      } else {
+        state.selectedOverlay = null;
+        state.dragging = null;
+      }
+      updateSelectedOverlayUI();
+      renderPreviewFrame();
+    });
+
+    els.previewCanvas.addEventListener('pointermove', (e) => {
+      if (state.isPlaying || state.isExporting) return;
+      const { x, y } = getCanvasPointerCoords(e);
+
+      if (state.dragging) {
+        const info = getClipAtTime(state.currentTime);
+        if (!info) return;
+        const clip = info.clip;
+        const nx = Math.max(0.05, Math.min(0.95, (x - state.dragging.offsetX) / els.previewCanvas.width));
+        const ny = Math.max(0.05, Math.min(0.95, (y - state.dragging.offsetY) / els.previewCanvas.height));
+
+        // 接近水平中線 (48%~52%) 時自動微幅吸附置中
+        const snappedX = Math.abs(nx - 0.5) < 0.022 ? 0.5 : nx;
+
+        if (state.dragging.kind === 'subtitle') {
+          const sub = clip.subtitles.find(s => s.id === state.dragging.id);
+          if (sub) { sub.x = snappedX; sub.y = ny; }
+        } else if (state.dragging.kind === 'image') {
+          const im = clip.images.find(i => i.id === state.dragging.id);
+          if (im) { im.x = snappedX; im.y = ny; }
+        }
+        updateSelectedOverlayUI();
+        renderPreviewFrame();
+      } else {
+        const hit = hitTestOverlay(x, y);
+        const prevId = state.hoveredOverlay?.id || null;
+        const nextId = hit?.id || null;
+        state.hoveredOverlay = hit ? { kind: hit.kind, id: hit.id } : null;
+        els.previewCanvas.style.cursor = hit ? 'grab' : 'default';
+        if (prevId !== nextId) renderPreviewFrame();
+      }
+    });
+
+    function endDrag(e) {
+      if (state.dragging) {
+        try { els.previewCanvas.releasePointerCapture(e.pointerId); } catch (_) {}
+        state.dragging = null;
+        els.previewCanvas.style.cursor = 'grab';
+        renderPreviewFrame();
+      }
+    }
+    els.previewCanvas.addEventListener('pointerup', endDrag);
+    els.previewCanvas.addEventListener('pointercancel', endDrag);
+
+    // 快捷排版按鈕：水平置中 / 重置位置
+    els.btnCenterX.addEventListener('click', () => {
+      const info = getClipAtTime(state.currentTime);
+      if (!info || !state.selectedOverlay) return;
+      const list = state.selectedOverlay.kind === 'subtitle' ? info.clip.subtitles : info.clip.images;
+      const obj = list.find(o => o.id === state.selectedOverlay.id);
+      if (obj) {
+        obj.x = 0.5;
+        updateSelectedOverlayUI();
+        renderPreviewFrame();
+      }
+    });
+
+    els.btnResetPos.addEventListener('click', () => {
+      const info = getClipAtTime(state.currentTime);
+      if (!info || !state.selectedOverlay) return;
+      if (state.selectedOverlay.kind === 'subtitle') {
+        const idx = info.clip.subtitles.findIndex(s => s.id === state.selectedOverlay.id);
+        if (idx !== -1) {
+          const presets = [0.35, 0.56, 0.72, 0.22];
+          info.clip.subtitles[idx].x = 0.5;
+          info.clip.subtitles[idx].y = presets[idx % presets.length];
+        }
+      } else {
+        const im = info.clip.images.find(i => i.id === state.selectedOverlay.id);
+        if (im) { im.x = 0.5; im.y = 0.68; }
+      }
+      updateSelectedOverlayUI();
+      renderPreviewFrame();
+    });
+
+    // ============================================================================
+    // 7. 播放引擎 (預覽目前片段 / 從頭完整播放)
     // ============================================================================
     function ensureClipAudioNode(clip) {
       if (clip.type !== 'video') return;
@@ -1144,25 +1723,23 @@ ctx.shadowOffsetY = 3;
           clip.audioSourceNode.connect(clip.gainNode);
           clip.gainNode.connect(masterVideoGain);
         } catch (err) {
-          console.warn('影片音軌連接略過:', err);
+          console.warn('音軌節點連接略過:', err);
         }
       }
     }
 
-    function startBgmPlayback(offsetSec, totalDuration) {
+    function startBgmPlayback(offsetSec, playDuration) {
       stopBgmPlayback();
       const ctx = ensureAudioContext();
-      if (!state.bgmBuffer) {
-        state.bgmBuffer = generateUpbeatBgmBuffer();
-      }
+      if (!state.bgmBuffer) state.bgmBuffer = generateUpbeatBgmBuffer();
+
       const source = ctx.createBufferSource();
       source.buffer = state.bgmBuffer;
       source.loop = true;
       source.connect(bgmGainNode);
 
-      // 設定音量與結尾 1 秒自動淡出
       const now = ctx.currentTime;
-      const remaining = Math.max(0.1, totalDuration - offsetSec);
+      const remaining = Math.max(0.1, playDuration);
       bgmGainNode.gain.cancelScheduledValues(now);
       bgmGainNode.gain.setValueAtTime(state.bgmVolume, now);
       if (remaining > 1.0) {
@@ -1172,8 +1749,7 @@ ctx.shadowOffsetY = 3;
         bgmGainNode.gain.linearRampToValueAtTime(0.001, now + remaining);
       }
 
-      const startOffset = offsetSec % state.bgmBuffer.duration;
-      source.start(now, startOffset);
+      source.start(now, offsetSec % state.bgmBuffer.duration);
       bgmSourceNode = source;
     }
 
@@ -1205,31 +1781,31 @@ ctx.shadowOffsetY = 3;
       if (clip.type === 'video') {
         ensureClipAudioNode(clip);
         const targetT = Math.min(clip.mediaDuration - 0.05, clip.startTime + localTime);
-        if (Math.abs(clip.element.currentTime - targetT) > 0.15) {
+        if (Math.abs(clip.element.currentTime - targetT) > 0.12) {
           clip.element.currentTime = Math.max(0, targetT);
         }
         if (clip.gainNode) clip.gainNode.gain.value = 1.0;
         clip.element.play().catch(() => {});
       }
 
-      // 預先將下一個影片片段定位到它的起點，確保硬切零延遲
+      // 預先將下一段影片定位到起點，減少轉場延遲
       const nextClip = state.clips[index + 1];
       if (nextClip && nextClip.type === 'video') {
         nextClip.element.currentTime = nextClip.startTime;
       }
     }
 
-    function startPlayback() {
+    function startPlayback(fromTime = null, endLimit = null) {
       if (state.clips.length === 0) {
-        showToast('請先上傳素材，或點擊「先載入範例素材體驗看看」', 'warning');
+        showToast('請先匯入素材，或點上方「載入範例素材體驗」', 'warning');
         return;
       }
       if (state.isExporting) return;
 
       const total = getTotalDuration();
-      if (state.currentTime >= total - 0.05) {
-        state.currentTime = 0;
-      }
+      state.currentTime = fromTime !== null ? fromTime : 0;
+      if (state.currentTime >= total - 0.05) state.currentTime = 0;
+      state.playEndLimit = endLimit !== null ? Math.min(endLimit, total) : total;
 
       ensureAudioContext();
       masterVideoGain.gain.value = state.origVolume;
@@ -1237,8 +1813,8 @@ ctx.shadowOffsetY = 3;
       state.activeClipId = null;
       state.lastFrameTs = performance.now();
 
-      updatePlayButtonUI();
-      startBgmPlayback(state.currentTime, total);
+      updatePlayUI();
+      startBgmPlayback(state.currentTime, state.playEndLimit - state.currentTime);
 
       const loop = (now) => {
         if (!state.isPlaying) return;
@@ -1246,17 +1822,16 @@ ctx.shadowOffsetY = 3;
         state.lastFrameTs = now;
         state.currentTime += dt;
 
-        const totalDur = getTotalDuration();
-        if (state.currentTime >= totalDur) {
-          state.currentTime = totalDur;
-          renderFrameAt(state.currentTime);
+        if (state.currentTime >= state.playEndLimit) {
+          state.currentTime = state.playEndLimit;
+          renderPreviewFrame();
           stopPlayback();
           return;
         }
 
         const info = getClipAtTime(state.currentTime);
         activateClipForPlayback(info);
-        renderFrameAt(state.currentTime);
+        renderPreviewFrame();
         state.rafId = requestAnimationFrame(loop);
       };
       state.rafId = requestAnimationFrame(loop);
@@ -1265,23 +1840,31 @@ ctx.shadowOffsetY = 3;
     function stopPlayback() {
       state.isPlaying = false;
       state.activeClipId = null;
+      state.playEndLimit = null;
       if (state.rafId) {
         cancelAnimationFrame(state.rafId);
         state.rafId = null;
       }
       stopBgmPlayback();
       pauseAllVideos();
-      updatePlayButtonUI();
+      updatePlayUI();
+      renderPreviewFrame();
     }
 
-    function updatePlayButtonUI() {
+    function updatePlayUI() {
       els.iconPlay.classList.toggle('hidden', state.isPlaying);
       els.iconPause.classList.toggle('hidden', !state.isPlaying);
-      els.playPauseText.textContent = state.isPlaying ? '暫停預覽' : '預覽播放';
+      els.playFullText.textContent = state.isPlaying ? '暫停播放' : '從頭完整播放';
+      els.previewModeDot.className = state.isPlaying
+        ? 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse'
+        : 'w-2 h-2 rounded-full bg-orange-400';
+      els.previewModeLabel.textContent = state.isPlaying
+        ? '影片播放預覽中（已隱藏虛線框）'
+        : '編輯排版模式（可直接拖曳文字/圖片）';
     }
 
     // ============================================================================
-    // 7. 一鍵匯出短影音 (Offscreen Canvas + MediaRecorder + 雙軌混音)
+    // 8. 3秒防卡頓緩衝預熱匯出引擎 (1080x1920, 10 Mbps)
     // ============================================================================
     function getBestSupportedMimeType() {
       const candidates = [
@@ -1292,14 +1875,32 @@ ctx.shadowOffsetY = 3;
         'video/webm',
       ];
       for (const mime of candidates) {
-        if (window.MediaRecorder && MediaRecorder.isTypeSupported(mime)) {
-          return mime;
-        }
+        if (window.MediaRecorder && MediaRecorder.isTypeSupported(mime)) return mime;
       }
       return '';
     }
 
-    async function exportVideo() {
+    function seekVideoExact(videoEl, targetSec) {
+      return new Promise((resolve) => {
+        const safeT = Math.max(0, Math.min(videoEl.duration - 0.05, targetSec));
+        if (Math.abs(videoEl.currentTime - safeT) < 0.04) {
+          resolve();
+          return;
+        }
+        const timer = setTimeout(() => {
+          videoEl.onseeked = null;
+          resolve();
+        }, 700);
+        videoEl.onseeked = () => {
+          clearTimeout(timer);
+          videoEl.onseeked = null;
+          resolve();
+        };
+        videoEl.currentTime = safeT;
+      });
+    }
+
+    async function exportVideoWithWarmup() {
       if (state.clips.length === 0) {
         showToast('請先加入至少一個行程素材再匯出！', 'warning');
         return;
@@ -1308,132 +1909,203 @@ ctx.shadowOffsetY = 3;
 
       const mimeType = getBestSupportedMimeType();
       if (!mimeType) {
-        showToast('您目前的瀏覽器不支援影片錄製匯出，建議改用最新版 Chrome、Edge 或 Safari。', 'error');
+        showToast('目前瀏覽器不支援錄製匯出，請改用最新版 Chrome、Edge 或 Safari。', 'error');
         return;
       }
 
       stopPlayback();
       state.isExporting = true;
-      setExportUIState(true, 0, '初始化匯出畫布與音軌...');
+      state.selectedOverlay = null;
+      state.hoveredOverlay = null;
+      setExportOverlayMode('warmup', 3, 0, '正在預熱編碼器與緩衝第 1 段素材...');
 
       try {
-        const [expW, expH] = els.resolutionSelect.value.split('x').map(Number);
+        // 建立 1080x1920 高畫質離屏匯出畫布
         const exportCanvas = document.createElement('canvas');
-        exportCanvas.width = expW;
-        exportCanvas.height = expH;
+        exportCanvas.width = EXPORT_W;
+        exportCanvas.height = EXPORT_H;
         const expCtx = exportCanvas.getContext('2d');
 
-        // 準備 Web Audio 匯出混音節點
+        // 預熱 AudioContext 與混音匯出節點
         const ctx = ensureAudioContext();
+        if (!state.bgmBuffer) state.bgmBuffer = generateUpbeatBgmBuffer();
         exportAudioDest = ctx.createMediaStreamDestination();
         masterVideoGain.gain.value = state.origVolume;
         masterVideoGain.connect(exportAudioDest);
         bgmGainNode.connect(exportAudioDest);
 
-        // 先定位所有影片素材到起點，確保開場順暢
+        // ------------------------------------------------------------------
+        // 【3 秒防卡頓緩衝預熱階段】：不呼叫 MediaRecorder.start()
+        // ------------------------------------------------------------------
+        const firstClip = state.clips[0];
+        // 預先連接所有影片音軌並 seek 到各自起點
         for (const c of state.clips) {
           if (c.type === 'video') {
             ensureClipAudioNode(c);
-            c.element.currentTime = c.startTime;
+            if (c.gainNode) c.gainNode.gain.value = 0;
           }
         }
-        await new Promise(r => setTimeout(r, 250));
 
-        // 合併影像與混音音軌串流
+        // 若第 1 段是影片，靜音短暫播放再停回起點，徹底喚醒瀏覽器硬體解碼器
+        if (firstClip.type === 'video') {
+          await seekVideoExact(firstClip.element, firstClip.startTime);
+          try {
+            await firstClip.element.play();
+            await new Promise(r => setTimeout(r, 250));
+            firstClip.element.pause();
+          } catch (_) {}
+          await seekVideoExact(firstClip.element, firstClip.startTime);
+        }
+
+        // 預先定位第 2 段影片
+        if (state.clips[1] && state.clips[1].type === 'video') {
+          await seekVideoExact(state.clips[1].element, state.clips[1].startTime);
+        }
+
+        // 3 -> 2 -> 1 倒數，同時持續預熱 Canvas 渲染迴圈
+        const warmupStart = performance.now();
+        const warmupTotalMs = 3000;
+        await new Promise((resolve) => {
+          const warmupTick = () => {
+            const elapsed = performance.now() - warmupStart;
+            const remainSec = Math.max(1, Math.ceil((warmupTotalMs - elapsed) / 1000));
+            els.warmupCountdownNum.textContent = String(remainSec);
+            els.exportStatusText.textContent = `緩衝預熱倒數 ${remainSec} 秒（防開頭卡頓）...`;
+
+            // 預熱繪製第 1 幀到匯出與預覽畫布
+            renderFrameToCanvas(expCtx, EXPORT_W, EXPORT_H, 0, false);
+            renderFrameToCanvas(previewCtx, els.previewCanvas.width, els.previewCanvas.height, 0, false);
+
+            if (elapsed >= warmupTotalMs) {
+              resolve();
+              return;
+            }
+            requestAnimationFrame(warmupTick);
+          };
+          requestAnimationFrame(warmupTick);
+        });
+
+        // ------------------------------------------------------------------
+        // 【倒數結束瞬間】：精準重置第 1 段、啟動音訊並開始正式錄製
+        // ------------------------------------------------------------------
+        if (firstClip.type === 'video') {
+          await seekVideoExact(firstClip.element, firstClip.startTime);
+        }
+
         const videoStream = exportCanvas.captureStream(30);
-        const combinedTracks = [
+        const combinedStream = new MediaStream([
           ...videoStream.getVideoTracks(),
           ...exportAudioDest.stream.getAudioTracks(),
-        ];
-        const combinedStream = new MediaStream(combinedTracks);
+        ]);
 
         const chunks = [];
         const recorder = new MediaRecorder(combinedStream, {
           mimeType,
-          videoBitsPerSecond: expW >= 1080 ? 6_500_000 : 3_800_000,
+          videoBitsPerSecond: EXPORT_BITRATE, // 鎖定 10 Mbps 高畫質
         });
 
         recorder.ondataavailable = (e) => {
           if (e.data && e.data.size > 0) chunks.push(e.data);
         };
-
-        const recordingDone = new Promise((resolve) => {
-          recorder.onstop = () => resolve();
-        });
+        const recordingStopped = new Promise(res => { recorder.onstop = res; });
 
         const totalDuration = getTotalDuration();
         state.currentTime = 0;
         state.activeClipId = null;
 
+        setExportOverlayMode('recording', 0, 0, '開始正式錄製 (1080×1920・10 Mbps)...');
+
+        // 啟動錄製、BGM 與第 1 段播放
         recorder.start(100);
         startBgmPlayback(0, totalDuration);
+        const firstInfo = getClipAtTime(0);
+        activateClipForPlayback(firstInfo);
 
-        const startPerf = performance.now();
+        const recStartPerf = performance.now();
+        const preloadedNextIds = new Set();
 
         await new Promise((resolve) => {
-          const tick = () => {
-            const elapsed = (performance.now() - startPerf) / 1000;
+          const recTick = () => {
+            const elapsed = (performance.now() - recStartPerf) / 1000;
             state.currentTime = Math.min(elapsed, totalDuration);
 
             const info = getClipAtTime(state.currentTime);
             activateClipForPlayback(info);
 
-            // 同步繪製到高畫質匯出畫布與預覽畫布
-            renderFrameToCanvas(expCtx, expW, expH, state.currentTime);
-            renderFrameToCanvas(previewCtx, els.previewCanvas.width, els.previewCanvas.height, state.currentTime);
+            // 當前片段剩餘不到 0.5 秒時，再次確認下一段影片已定位在起點
+            if (info) {
+              const remainingInClip = info.clip.duration - info.localTime;
+              const nextClip = state.clips[info.index + 1];
+              if (remainingInClip < 0.5 && nextClip && nextClip.type === 'video' && !preloadedNextIds.has(nextClip.id)) {
+                preloadedNextIds.add(nextClip.id);
+                if (Math.abs(nextClip.element.currentTime - nextClip.startTime) > 0.1) {
+                  nextClip.element.currentTime = nextClip.startTime;
+                }
+              }
+            }
+
+            // 同步繪製至 1080x1920 匯出畫布與預覽畫布 (無虛線框)
+            renderFrameToCanvas(expCtx, EXPORT_W, EXPORT_H, state.currentTime, false);
+            renderFrameToCanvas(previewCtx, els.previewCanvas.width, els.previewCanvas.height, state.currentTime, false);
             updateTimecodeUI();
 
             const pct = Math.min(100, Math.round((state.currentTime / totalDuration) * 100));
-            setExportUIState(true, pct, `正在錄製短影音 (${state.currentTime.toFixed(1)}s / ${totalDuration.toFixed(1)}s)`);
+            setExportOverlayMode('recording', 0, pct, `正在錄製短影音 (${state.currentTime.toFixed(1)}s / ${totalDuration.toFixed(1)}s)`);
 
             if (elapsed >= totalDuration) {
               resolve();
               return;
             }
-            requestAnimationFrame(tick);
+            requestAnimationFrame(recTick);
           };
-          requestAnimationFrame(tick);
+          requestAnimationFrame(recTick);
         });
 
         stopBgmPlayback();
         pauseAllVideos();
         recorder.stop();
-        setExportUIState(true, 100, '封裝影片檔案中...');
-        await recordingDone;
+        setExportOverlayMode('recording', 0, 100, '封裝高畫質影片檔案中...');
+        await recordingStopped;
 
-        // 斷開匯出音軌節點
         try { masterVideoGain.disconnect(exportAudioDest); } catch (_) {}
         try { bgmGainNode.disconnect(exportAudioDest); } catch (_) {}
 
-        // 觸發檔案下載
-        const isMp4 = mimeType.includes('mp4');
-        const ext = isMp4 ? 'mp4' : 'webm';
+        const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
         const blob = new Blob(chunks, { type: mimeType });
-        const downloadUrl = URL.createObjectURL(blob);
+        const dlUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = downloadUrl;
-        a.download = `旅行社宣傳短影音_${expW}x${expH}.${ext}`;
+        a.href = dlUrl;
+        a.download = `旅行社短影音_${EXPORT_W}x${EXPORT_H}.${ext}`;
         document.body.appendChild(a);
         a.click();
         a.remove();
-        setTimeout(() => URL.revokeObjectURL(downloadUrl), 5000);
+        setTimeout(() => URL.revokeObjectURL(dlUrl), 5000);
 
-        showToast(`短影音匯出完成！已自動下載 .${ext} 檔案`, 'success');
+        showToast(`匯出完成！已自動下載高畫質 1080×1920 (.${ext}) 影片`, 'success');
       } catch (err) {
-        console.error('匯出過程發生錯誤:', err);
-        showToast('匯出失敗，請確認素材皆可正常播放後重試。', 'error');
+        console.error('匯出錯誤:', err);
+        showToast('匯出過程發生錯誤，請確認素材正常後重試。', 'error');
       } finally {
         state.isExporting = false;
         state.activeClipId = null;
-        setExportUIState(false, 0, '');
+        setExportOverlayMode('idle', 0, 0, '');
+        renderPreviewFrame();
       }
     }
 
-    function setExportUIState(active, pct, statusText) {
+    function setExportOverlayMode(mode, countdown, pct, statusText) {
+      const active = mode !== 'idle';
       els.exportOverlay.classList.toggle('hidden', !active);
       els.exportProgressWrap.classList.toggle('hidden', !active);
       els.btnExportMain.disabled = active;
       els.btnHeaderExport.disabled = active;
+
+      els.warmupStage.classList.toggle('hidden', mode !== 'warmup');
+      els.recordingStage.classList.toggle('hidden', mode !== 'recording');
+      if (mode === 'recording') els.recordingStage.classList.add('flex');
+      else els.recordingStage.classList.remove('flex');
+
+      els.warmupCountdownNum.textContent = String(countdown);
       els.exportPercentText.textContent = `${pct}%`;
       els.exportBarPercent.textContent = `${pct}%`;
       els.exportProgressBar.style.width = `${pct}%`;
@@ -1441,15 +2113,14 @@ ctx.shadowOffsetY = 3;
     }
 
     // ============================================================================
-    // 8. 事件綁定與初始化
+    // 9. 全域按鈕事件綁定與初始化
     // ============================================================================
-
-    // 拖拉與點選上傳
     els.dropZone.addEventListener('click', () => els.mediaInput.click());
     els.mediaInput.addEventListener('change', (e) => {
       handleMediaFiles(e.target.files);
       e.target.value = '';
     });
+
     ['dragenter', 'dragover'].forEach(evt => {
       els.dropZone.addEventListener(evt, (e) => {
         e.preventDefault();
@@ -1462,78 +2133,76 @@ ctx.shadowOffsetY = 3;
         els.dropZone.classList.remove('drop-active');
       });
     });
-    els.dropZone.addEventListener('drop', (e) => {
-      handleMediaFiles(e.dataTransfer.files);
-    });
+    els.dropZone.addEventListener('drop', (e) => handleMediaFiles(e.dataTransfer.files));
 
-    // 範例素材與清空
     els.btnLoadDemo.addEventListener('click', loadDemoClips);
+    els.btnEmptyDemo.addEventListener('click', loadDemoClips);
+
     els.btnClearClips.addEventListener('click', () => {
       stopPlayback();
       state.clips.forEach(c => {
         if (c.type === 'video' && c.element) c.element.remove();
         if (c.url) URL.revokeObjectURL(c.url);
+        c.images.forEach(im => URL.revokeObjectURL(im.url));
       });
       state.clips = [];
+      state.selectedClipId = null;
+      state.selectedOverlay = null;
       state.currentTime = 0;
       renderStoryboard();
       updateTimelineInfo();
-      renderFrameAt(0);
+      updateSelectedOverlayUI();
+      renderPreviewFrame();
       showToast('已清空所有分鏡素材', 'info');
     });
 
-    // 套用旅遊爆款文案模板
-    els.btnApplyTemplate.addEventListener('click', () => {
-      if (state.clips.length === 0) {
-        showToast('請先上傳素材或載入範例素材，再套用文案模板！', 'warning');
+    // 預覽目前選中片段
+    els.btnPreviewCurrent.addEventListener('click', () => {
+      if (state.isPlaying) {
+        stopPlayback();
         return;
       }
-      state.clips.forEach((clip, idx) => {
-        clip.isHook = (idx === 0);
-        if (idx === state.clips.length - 1 && state.clips.length > 1) {
-          clip.text = VIRAL_TEMPLATES[VIRAL_TEMPLATES.length - 1];
-        } else {
-          clip.text = VIRAL_TEMPLATES[idx % (VIRAL_TEMPLATES.length - 1)];
-        }
-      });
-      renderStoryboard();
-      renderFrameAt(state.currentTime);
-      showToast('已套用「旅遊爆款文案模板」，你可以直接微調字句！', 'success');
+      const clip = getSelectedClip() || state.clips[0];
+      if (!clip) {
+        showToast('請先匯入素材！', 'warning');
+        return;
+      }
+      const start = getClipGlobalStart(clip.id);
+      startPlayback(start, start + clip.duration);
     });
 
-    // 播放控制
-    els.btnPlayPause.addEventListener('click', () => {
+    // 從頭完整播放 / 暫停
+    els.btnPlayFull.addEventListener('click', () => {
       if (state.isPlaying) stopPlayback();
-      else startPlayback();
+      else startPlayback(0, getTotalDuration());
     });
-    els.btnRestart.addEventListener('click', () => {
-      const wasPlaying = state.isPlaying;
-      stopPlayback();
-      state.currentTime = 0;
-      renderFrameAt(0);
-      if (wasPlaying) startPlayback();
-    });
+
+    // 點擊進度條跳轉
     els.timelineBar.addEventListener('click', (e) => {
       const total = getTotalDuration();
       if (total <= 0) return;
       const rect = els.timelineBar.getBoundingClientRect();
       const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-      const wasPlaying = state.isPlaying;
       stopPlayback();
       state.currentTime = ratio * total;
       const info = getClipAtTime(state.currentTime);
-      if (info && info.clip.type === 'video') {
-        info.clip.element.currentTime = info.clip.startTime + info.localTime;
-        info.clip.element.onseeked = () => {
-          info.clip.element.onseeked = null;
-          renderFrameAt(state.currentTime);
-        };
+      if (info) {
+        state.selectedClipId = info.clip.id;
+        state.selectedOverlay = null;
+        if (info.clip.type === 'video') {
+          info.clip.element.currentTime = info.clip.startTime + info.localTime;
+          info.clip.element.onseeked = () => {
+            info.clip.element.onseeked = null;
+            renderPreviewFrame();
+          };
+        }
+        renderStoryboard();
+        updateSelectedOverlayUI();
       }
-      renderFrameAt(state.currentTime);
-      if (wasPlaying) startPlayback();
+      renderPreviewFrame();
     });
 
-    // 自訂 BGM 上傳
+    // 上傳自訂 BGM
     els.bgmInput.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -1541,78 +2210,40 @@ ctx.shadowOffsetY = 3;
       try {
         showToast('正在解碼背景音樂...', 'info');
         const ctx = ensureAudioContext();
-        const arrayBuf = await file.arrayBuffer();
-        state.bgmBuffer = await ctx.decodeAudioData(arrayBuf);
+        state.bgmBuffer = await ctx.decodeAudioData(await file.arrayBuffer());
         state.bgmName = file.name;
-        els.bgmStatusBadge.textContent = file.name.length > 14 ? file.name.slice(0, 14) + '…' : file.name;
+        els.bgmStatusBadge.textContent = file.name;
         showToast(`已載入音樂：${file.name}`, 'success');
       } catch (err) {
         console.error(err);
-        showToast('無法解碼此音檔，請改用 MP3 或 WAV 格式。', 'error');
+        showToast('無法解碼此音檔，請使用 MP3 或 WAV 格式。', 'error');
       }
       e.target.value = '';
     });
 
-    // 切換回內建輕快 BGM
     els.btnBuiltinBgm.addEventListener('click', () => {
       stopPlayback();
       state.bgmBuffer = generateUpbeatBgmBuffer();
-      state.bgmName = '內建輕快節奏 BGM (120 BPM)';
-      els.bgmStatusBadge.textContent = '內建輕快節奏';
-      showToast('已切換為「內建輕快節奏 BGM (120 BPM)」', 'success');
+      state.bgmName = '內建 120 BPM';
+      els.bgmStatusBadge.textContent = '內建 120 BPM';
+      showToast('已切換為內建 120 BPM 輕快節奏 BGM', 'success');
     });
 
-    // Auto-BPM 偵測並套用到所有片段
     els.btnDetectBpm.addEventListener('click', () => {
       stopPlayback();
-      if (!state.bgmBuffer) {
-        state.bgmBuffer = generateUpbeatBgmBuffer();
-      }
+      if (!state.bgmBuffer) state.bgmBuffer = generateUpbeatBgmBuffer();
       const { bpm, cutSec } = detectBpmFromBuffer(state.bgmBuffer);
       state.globalRhythm = cutSec;
-      els.rhythmSlider.value = cutSec;
-      els.rhythmSecLabel.textContent = `${cutSec.toFixed(1)} 秒 / 鏡`;
-      applyRhythmToAllClips(cutSec);
-      showToast(`偵測到音樂節奏約 ${bpm} BPM，已自動套用 ${cutSec.toFixed(1)} 秒/鏡踩點快切！`, 'success');
-    });
-
-    // 節奏預設按鈕與滑桿
-    function applyRhythmToAllClips(sec) {
       state.clips.forEach(c => {
-        c.duration = c.type === 'video' ? Math.min(sec, c.mediaDuration) : sec;
+        c.duration = c.type === 'video' ? Math.min(cutSec, c.mediaDuration) : cutSec;
       });
       renderStoryboard();
       updateTimelineInfo();
-      renderFrameAt(state.currentTime);
-    }
-
-    document.querySelectorAll('.rhythm-preset').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const sec = parseFloat(btn.dataset.rhythm);
-        state.globalRhythm = sec;
-        els.rhythmSlider.value = sec;
-        els.rhythmSecLabel.textContent = `${sec.toFixed(1)} 秒 / 鏡`;
-
-        document.querySelectorAll('.rhythm-preset').forEach(b => {
-          b.className = 'rhythm-preset py-1.5 rounded-lg text-xs font-medium bg-studio-card hover:bg-slate-700 border border-studio-border text-slate-300 transition cursor-pointer';
-        });
-        btn.className = 'rhythm-preset py-1.5 rounded-lg text-xs font-medium bg-orange-500/20 border border-orange-500 text-orange-300 transition cursor-pointer';
-        applyRhythmToAllClips(sec);
-      });
+      renderPreviewFrame();
+      showToast(`偵測到音樂約 ${bpm} BPM，已將全片時長對齊為 ${cutSec.toFixed(1)} 秒/鏡！`, 'success');
     });
 
-    els.rhythmSlider.addEventListener('input', (e) => {
-      const sec = parseFloat(e.target.value);
-      state.globalRhythm = sec;
-      els.rhythmSecLabel.textContent = `${sec.toFixed(1)} 秒 / 鏡`;
-    });
-
-    els.btnApplyRhythmAll.addEventListener('click', () => {
-      applyRhythmToAllClips(state.globalRhythm);
-      showToast(`已將所有片段時長統一設為 ${state.globalRhythm.toFixed(1)} 秒`, 'info');
-    });
-
-    // 雙軌混音滑桿
+    // 音量與濾鏡控制
     els.origVolSlider.addEventListener('input', (e) => {
       const pct = Number(e.target.value);
       state.origVolume = pct / 100;
@@ -1627,29 +2258,63 @@ ctx.shadowOffsetY = 3;
       if (bgmGainNode) bgmGainNode.gain.value = state.bgmVolume;
     });
 
-    // 視覺與浮水印控制
-    els.subPosSlider.addEventListener('input', (e) => {
-      state.subtitlePosPct = Number(e.target.value);
-      els.subPosLabel.textContent = `${state.subtitlePosPct}%`;
-      renderFrameAt(state.currentTime);
-    });
-
     els.filterToggle.addEventListener('change', (e) => {
       state.enableColorFilter = e.target.checked;
-      renderFrameAt(state.currentTime);
-    });
-
-    els.watermarkInput.addEventListener('input', (e) => {
-      state.watermarkText = e.target.value;
-      renderFrameAt(state.currentTime);
+      renderPreviewFrame();
     });
 
     // 匯出按鈕
-    els.btnExportMain.addEventListener('click', exportVideo);
-    els.btnHeaderExport.addEventListener('click', exportVideo);
+    els.btnExportMain.addEventListener('click', exportVideoWithWarmup);
+    els.btnHeaderExport.addEventListener('click', exportVideoWithWarmup);
 
-    // 初始畫面渲染
-    renderFrameAt(0);
+    // --- 新增功能事件綁定：Hook 開關、預設字幕位置、匯出解析度 ---
+    document.getElementById('hookToggle').addEventListener('change', (e) => {
+      state.enableHookBigText = e.target.checked;
+      renderPreviewFrame();
+    });
+
+    function syncDefaultSubInputs() {
+      const xVal = Math.max(5, Math.min(95, parseFloat(document.getElementById('defaultSubX').value) || 50));
+      const yVal = Math.max(5, Math.min(95, parseFloat(document.getElementById('defaultSubY').value) || 35));
+      state.defaultSubX = xVal / 100;
+      state.defaultSubY = yVal / 100;
+    }
+    document.getElementById('defaultSubX').addEventListener('input', syncDefaultSubInputs);
+    document.getElementById('defaultSubY').addEventListener('input', syncDefaultSubInputs);
+
+    document.getElementById('btnApplyDefaultSubPos').addEventListener('click', () => {
+      syncDefaultSubInputs();
+      if (state.clips.length === 0) {
+        showToast('已更新預設位置，之後匯入的素材都會自動套用！', 'info');
+        return;
+      }
+      state.clips.forEach(c => {
+        if (c.subtitles && c.subtitles[0]) {
+          c.subtitles[0].x = state.defaultSubX;
+          c.subtitles[0].y = state.defaultSubY;
+        }
+      });
+      updateSelectedOverlayUI();
+      renderPreviewFrame();
+      showToast(`已將全部片段的第 1 段字幕套用為 (X:${Math.round(state.defaultSubX * 100)}%, Y:${Math.round(state.defaultSubY * 100)}%)`, 'success');
+    });
+
+    document.getElementById('exportResSelect').addEventListener('change', (e) => {
+      if (e.target.value === '1080p') {
+        EXPORT_W = 1080;
+        EXPORT_H = 1920;
+        EXPORT_BITRATE = 10_000_000;
+        showToast('已切換為 1080×1920 高畫質匯出', 'info');
+      } else {
+        EXPORT_W = 720;
+        EXPORT_H = 1280;
+        EXPORT_BITRATE = 5_000_000;
+        showToast('已切換為 720×1280 標準流暢匯出', 'info');
+      }
+    });
+
+    // 初始畫面繪製
+    renderPreviewFrame();
   </script>
 </body>
 </html>
