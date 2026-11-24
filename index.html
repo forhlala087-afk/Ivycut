@@ -6,6 +6,7 @@
   <title>旅行社短影音快剪工具 V2｜拖拉排版・3秒防卡頓匯出</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <!-- Google Fonts: Noto Sans TC & Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -138,7 +139,7 @@
         </div>
 
         <div id="dropZone" class="border-2 border-dashed border-studio-border hover:border-orange-500/70 bg-studio-bg/60 rounded-2xl p-5 sm:p-6 text-center transition cursor-pointer group">
-          <input id="mediaInput" type="file" multiple accept="video/mp4,video/quicktime,video/webm,image/jpeg,image/png,image/webp" class="hidden" />
+          <input id="mediaInput" type="file" multiple accept="video/mp4,video/quicktime,video/webm,image/jpeg,image/png,image/webp,.zip,application/zip" class="hidden" />
           <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
             <div class="w-11 h-11 rounded-2xl bg-studio-card border border-studio-border flex items-center justify-center group-hover:scale-105 transition shrink-0">
               <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
@@ -676,12 +677,122 @@
     // ============================================================================
     // 3. 媒體素材匯入、插圖新增與範例體驗
     // ============================================================================
+    function guessMimeType(filename) {
+      const ext = filename.split('.').pop().toLowerCase();
+      const map = {
+        mp4: 'video/mp4', mov: 'video/quicktime', webm: 'video/webm',
+        jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp'
+      };
+      return map[ext] || '';
+    }
+
+    async function handleZipProject(zipFile) {
+      if (typeof JSZip === 'undefined') {
+        showToast('JSZip 尚未載入，請確認網路連線後重試', 'error');
+        return;
+      }
+      showToast('正在解壓縮 ZIP 並讀取腳本，請稍候...', 'info');
+      try {
+        const zip = await JSZip.loadAsync(zipFile);
+        const fileMap = new Map();
+        let jsonEntry = null;
+
+        // 掃描 ZIP 內所有檔案（自動忽略 Mac 產生的 __MACOSX 隱藏檔與資料夾層級）
+        zip.forEach((relPath, entry) => {
+          if (entry.dir || relPath.startsWith('__MACOSX/') || relPath.includes('/.')) return;
+          const baseName = relPath.split('/').pop();
+          if (baseName.startsWith('.')) return;
+          if (baseName.toLowerCase().endsWith('.json')) {
+            jsonEntry = entry;
+          } else {
+            fileMap.set(baseName.toLowerCase(), { entry, baseName });
+          }
+        });
+
+        if (!jsonEntry) {
+          showToast('ZIP 裡面找不到 .json 腳本檔！', 'error');
+          return;
+        }
+
+        const scriptData = JSON.parse(await jsonEntry.async('string'));
+        const items = Array.isArray(scriptData) ? scriptData : (scriptData.clips || []);
+        if (items.length === 0) {
+          showToast('JSON 腳本內容是空的！', 'warning');
+          return;
+        }
+
+        const fileCache = new Map();
+        let loadedCount = 0;
+        let missingFiles = [];
+
+        for (const item of items) {
+          const key = (item.file || '').trim().toLowerCase();
+          const matched = fileMap.get(key);
+          if (!matched) {
+            missingFiles.push(item.file);
+            continue;
+          }
+
+          // 同一支影片重複使用時直接從快取取 File，加快速度
+          let fileObj = fileCache.get(key);
+          if (!fileObj) {
+            const blob = await matched.entry.async('blob');
+            const mime = guessMimeType(matched.baseName);
+            fileObj = new File([blob], matched.baseName, { type: mime });
+            fileCache.set(key, fileObj);
+          }
+
+          const isVideo = fileObj.type.startsWith('video/');
+          const isImage = fileObj.type.startsWith('image/');
+          if (!isVideo && !isImage) continue;
+
+          const clip = isVideo ? await createVideoClip(fileObj) : await createImageClip(fileObj);
+
+          // 套用 JSON 指定的起始秒數、片段時長與字幕
+          if (isVideo && typeof item.start === 'number') {
+            clip.startTime = Math.max(0, Math.min(item.start, Math.max(0, clip.mediaDuration - 0.3)));
+          }
+          if (typeof item.duration === 'number') {
+            clip.duration = isVideo ? Math.min(item.duration, clip.mediaDuration) : item.duration;
+          }
+          if (item.text !== undefined) {
+            clip.subtitles = [createDefaultSubtitle(item.text, 0)];
+          }
+          if (item.text2) {
+            clip.subtitles.push(createDefaultSubtitle(item.text2, 1));
+          }
+
+          state.clips.push(clip);
+          loadedCount++;
+        }
+
+        if (loadedCount > 0) {
+          selectClipForEditing(state.clips[0].id);
+          const msg = missingFiles.length > 0
+            ? `已自動組裝 ${loadedCount} 段！（缺檔：${missingFiles.join(', ')}）`
+            : `太神啦！已從 ZIP 自動組裝完成 ${loadedCount} 段腳本與字幕`;
+          showToast(msg, missingFiles.length > 0 ? 'warning' : 'success');
+        } else {
+          showToast('沒有成功載入任何素材，請確認 ZIP 內檔名與 JSON 一致', 'error');
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('ZIP 或 JSON 解析失敗，請檢查 JSON 格式是否正確', 'error');
+      }
+    }
+
     async function handleMediaFiles(files) {
       if (!files || files.length === 0) return;
       stopPlayback();
 
       let count = 0;
       for (const file of files) {
+        // 若上傳的是 ZIP 檔，直接交給自動組裝引擎
+        if (file.name.toLowerCase().endsWith('.zip') || file.type.includes('zip')) {
+          await handleZipProject(file);
+          continue;
+        }
+
         const isVideo = file.type.startsWith('video/');
         const isImage = file.type.startsWith('image/');
         if (!isVideo && !isImage) continue;
