@@ -320,10 +320,10 @@
           <input id="hookToggle" type="checkbox" checked class="w-4 h-4 accent-orange-500 rounded cursor-pointer" />
         </label>
 
-        <!-- 預設第一字幕位置 (X, Y) 共用設定 -->
+        <!-- 預設第一字幕（位置、樣式、字級）共用設定 -->
         <div class="p-2.5 rounded-xl bg-studio-card/70 border border-studio-border space-y-2">
           <div class="flex items-center justify-between">
-            <p class="text-xs font-bold text-slate-200">預設第 1 段字幕位置（共用）</p>
+            <p class="text-xs font-bold text-slate-200">預設第 1 段字幕設定（共用）</p>
             <span class="text-[10px] text-slate-400">新素材預設套用</span>
           </div>
           <div class="grid grid-cols-2 gap-2 text-xs">
@@ -335,9 +335,20 @@
               <span class="text-slate-400">Y 垂直%</span>
               <input id="defaultSubY" type="number" min="5" max="95" value="35" class="w-12 bg-transparent text-white font-mono text-right focus:outline-none" />
             </label>
+            <select id="defaultSubStyle" class="bg-studio-bg border border-studio-border text-xs text-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-orange-500 cursor-pointer">
+              <option value="white_shadow">極簡白字微陰影</option>
+              <option value="gray_pill" selected>灰底半透明</option>
+              <option value="dark_pill">黑底半透明</option>
+              <option value="pink_tag">粉底白字標籤</option>
+              <option value="yellow_shadow">黃字微陰影</option>
+            </select>
+            <label class="flex items-center justify-between bg-studio-bg px-2.5 py-1.5 rounded-lg border border-studio-border">
+              <span class="text-slate-400">字級</span>
+              <input id="defaultSubFontSize" type="number" min="28" max="110" step="2" value="64" class="w-12 bg-transparent text-white font-mono text-right focus:outline-none" />
+            </label>
           </div>
           <button id="btnApplyDefaultSubPos" class="w-full py-1.5 rounded-lg bg-studio-bg hover:bg-orange-500/20 text-orange-300 border border-orange-500/40 text-xs font-bold transition cursor-pointer">
-            一鍵套用到目前全部片段
+            一鍵套用位置／樣式／字級到全部片段
           </button>
         </div>
       </div>
@@ -394,11 +405,11 @@
     // 字幕樣式設定
     const SUBTITLE_STYLES = {
       white_shadow: { label: '極簡白字微陰影' },
-      pink_tag:     { label: '粉底白字標籤' },
+      gray_pill:    { label: '灰底半透明' },
       dark_pill:    { label: '黑底半透明' },
+      pink_tag:     { label: '粉底白字標籤' },
       yellow_shadow:{ label: '黃字微陰影' },
     };
-
     // --- 全域狀態 ---
     const state = {
       clips: [],              // 分鏡陣列
@@ -413,6 +424,8 @@
       enableHookBigText: true,
       defaultSubX: 0.5,
       defaultSubY: 0.35,
+      defaultSubStyle: 'gray_pill',
+      defaultSubFontSize: 64,
       bgmBuffer: null,
       bgmName: '內建 120 BPM',
       isPlaying: false,
@@ -522,13 +535,12 @@
       return {
         id: genId('sub'),
         text,
-        fontSize: index === 0 ? 64 : 50,
-        style: index === 0 ? 'white_shadow' : 'pink_tag',
+        fontSize: index === 0 ? state.defaultSubFontSize : 50,
+        style: index === 0 ? state.defaultSubStyle : 'pink_tag',
         x: index === 0 ? state.defaultSubX : 0.5,
         y: yPresets[index % yPresets.length],
       };
     }
-
     // ============================================================================
     // 2. Web Audio 雙軌混音與內建 120 BPM 輕快 BGM 合成器
     // ============================================================================
@@ -1428,14 +1440,16 @@
       const padX = Math.round(28 * scale);
       const padY = Math.round(14 * scale);
 
-      // 背景標籤樣式 (粉底白字標籤 / 黑底半透明)
-      if (sub.style === 'pink_tag' || sub.style === 'dark_pill') {
+      // 背景標籤樣式 (粉底白字標籤 / 黑底半透明 / 灰底半透明)
+      if (sub.style === 'pink_tag' || sub.style === 'dark_pill' || sub.style === 'gray_pill') {
         const bgW = maxLineW + padX * 2;
         const bgH = totalH + padY * 1.4;
         const bgX = cx - bgW / 2;
         const bgY = cy - bgH / 2;
-        ctx.fillStyle = sub.style === 'pink_tag' ? 'rgba(239, 134, 140, 0.94)' : 'rgba(15, 23, 42, 0.76)';
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
+        if (sub.style === 'pink_tag') ctx.fillStyle = 'rgba(239, 134, 140, 0.94)';
+        else if (sub.style === 'gray_pill') ctx.fillStyle = 'rgba(100, 116, 139, 0.65)';
+        else ctx.fillStyle = 'rgba(15, 23, 42, 0.76)';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
         ctx.shadowBlur = Math.round(10 * scale);
         ctx.shadowOffsetY = Math.round(3 * scale);
         roundRectPath(ctx, bgX, bgY, bgW, bgH, Math.round(16 * scale));
@@ -2276,27 +2290,35 @@
     function syncDefaultSubInputs() {
       const xVal = Math.max(5, Math.min(95, parseFloat(document.getElementById('defaultSubX').value) || 50));
       const yVal = Math.max(5, Math.min(95, parseFloat(document.getElementById('defaultSubY').value) || 35));
+      const sizeVal = Math.max(28, Math.min(110, parseInt(document.getElementById('defaultSubFontSize').value, 10) || 64));
       state.defaultSubX = xVal / 100;
       state.defaultSubY = yVal / 100;
+      state.defaultSubStyle = document.getElementById('defaultSubStyle').value;
+      state.defaultSubFontSize = sizeVal;
     }
     document.getElementById('defaultSubX').addEventListener('input', syncDefaultSubInputs);
     document.getElementById('defaultSubY').addEventListener('input', syncDefaultSubInputs);
+    document.getElementById('defaultSubStyle').addEventListener('change', syncDefaultSubInputs);
+    document.getElementById('defaultSubFontSize').addEventListener('input', syncDefaultSubInputs);
 
     document.getElementById('btnApplyDefaultSubPos').addEventListener('click', () => {
       syncDefaultSubInputs();
       if (state.clips.length === 0) {
-        showToast('已更新預設位置，之後匯入的素材都會自動套用！', 'info');
+        showToast('已更新預設字幕設定，之後匯入的素材都會自動套用！', 'info');
         return;
       }
       state.clips.forEach(c => {
         if (c.subtitles && c.subtitles[0]) {
           c.subtitles[0].x = state.defaultSubX;
           c.subtitles[0].y = state.defaultSubY;
+          c.subtitles[0].style = state.defaultSubStyle;
+          c.subtitles[0].fontSize = state.defaultSubFontSize;
         }
       });
+      renderStoryboard();
       updateSelectedOverlayUI();
       renderPreviewFrame();
-      showToast(`已將全部片段的第 1 段字幕套用為 (X:${Math.round(state.defaultSubX * 100)}%, Y:${Math.round(state.defaultSubY * 100)}%)`, 'success');
+      showToast('已將全部片段的第 1 段字幕套用新位置、樣式與字級！', 'success');
     });
 
     document.getElementById('exportResSelect').addEventListener('change', (e) => {
