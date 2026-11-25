@@ -343,12 +343,31 @@
               <option value="dark_pill">黑底半透明</option>
               <option value="pink_tag">粉底白字標籤</option>
               <option value="yellow_shadow">黃字微陰影</option>
+              <option value="black_shadow">極簡黑字白影</option>
             </select>
             <label class="flex items-center justify-between bg-studio-bg px-2.5 py-1.5 rounded-lg border border-studio-border">
               <span class="text-slate-400">字級</span>
               <input id="defaultSubFontSize" type="number" min="28" max="110" step="2" value="64" class="w-12 bg-transparent text-white font-mono text-right focus:outline-none" />
             </label>
           </div>
+          <!-- 背景透明度與陰影程度即時控制 -->
+          <div class="space-y-2 pt-1.5 border-t border-studio-border/60">
+            <div class="space-y-1">
+              <div class="flex justify-between text-[11px] text-slate-300">
+                <span>字幕背景透明度</span>
+                <span id="subBgOpacityLabel" class="font-mono text-orange-300 font-bold">65%</span>
+              </div>
+              <input id="subBgOpacitySlider" type="range" min="0" max="100" value="65" class="w-full" />
+            </div>
+            <div class="space-y-1">
+              <div class="flex justify-between text-[11px] text-slate-300">
+                <span>文字陰影程度（白/黃字黑影・黑字白影）</span>
+                <span id="subShadowLabel" class="font-mono text-orange-300 font-bold">80%</span>
+              </div>
+              <input id="subShadowSlider" type="range" min="0" max="100" value="80" class="w-full" />
+            </div>
+          </div>
+
           <button id="btnApplyDefaultSubPos" class="w-full py-1.5 rounded-lg bg-studio-bg hover:bg-orange-500/20 text-orange-300 border border-orange-500/40 text-xs font-bold transition cursor-pointer">
             一鍵套用位置／樣式／字級到全部片段
           </button>
@@ -412,6 +431,7 @@
       dark_pill:    { label: '黑底半透明' },
       pink_tag:     { label: '粉底白字標籤' },
       yellow_shadow:{ label: '黃字微陰影' },
+      black_shadow: { label: '極簡黑字白影' },
     };
     // --- 全域狀態 ---
     const state = {
@@ -429,6 +449,8 @@
       defaultSubY: 0.35,
       defaultSubStyle: 'gray_pill',
       defaultSubFontSize: 64,
+      subBgOpacity: 0.65,
+      subShadowStrength: 0.8,
       bgmBuffer: null,
       bgmName: '內建 120 BPM',
       isPlaying: false,
@@ -1635,36 +1657,48 @@
       const padX = Math.round(28 * scale);
       const padY = Math.round(14 * scale);
 
-      // 背景標籤樣式 (粉底白字標籤 / 黑底半透明 / 灰底半透明 / 灰底半透明＋黑影)
+      // 背景標籤樣式（透明度由滑桿即時控制）
       if (sub.style === 'pink_tag' || sub.style === 'dark_pill' || sub.style === 'gray_pill' || sub.style === 'gray_pill_shadow') {
-        const bgW = maxLineW + padX * 2;
-        const bgH = totalH + padY * 1.4;
-        const bgX = cx - bgW / 2;
-        const bgY = cy - bgH / 2;
-        if (sub.style === 'pink_tag') ctx.fillStyle = 'rgba(239, 134, 140, 0.94)';
-        else if (sub.style === 'gray_pill' || sub.style === 'gray_pill_shadow') ctx.fillStyle = 'rgba(100, 116, 139, 0.65)';
-        else ctx.fillStyle = 'rgba(15, 23, 42, 0.76)';
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-        ctx.shadowBlur = Math.round(10 * scale);
-        ctx.shadowOffsetY = Math.round(3 * scale);
-        roundRectPath(ctx, bgX, bgY, bgW, bgH, Math.round(16 * scale));
-        ctx.fill();
-        ctx.shadowColor = 'transparent';
+        const bgAlpha = state.subBgOpacity;
+        if (bgAlpha > 0) {
+          const bgW = maxLineW + padX * 2;
+          const bgH = totalH + padY * 1.4;
+          const bgX = cx - bgW / 2;
+          const bgY = cy - bgH / 2;
+          if (sub.style === 'pink_tag') ctx.fillStyle = `rgba(239, 134, 140, ${bgAlpha})`;
+          else if (sub.style === 'gray_pill' || sub.style === 'gray_pill_shadow') ctx.fillStyle = `rgba(100, 116, 139, ${bgAlpha})`;
+          else ctx.fillStyle = `rgba(15, 23, 42, ${bgAlpha})`;
+          ctx.shadowColor = `rgba(0, 0, 0, ${bgAlpha * 0.45})`;
+          ctx.shadowBlur = Math.round(10 * scale);
+          ctx.shadowOffsetY = Math.round(3 * scale);
+          roundRectPath(ctx, bgX, bgY, bgW, bgH, Math.round(16 * scale));
+          ctx.fill();
+          ctx.shadowColor = 'transparent';
+        }
       }
 
-      // 繪製文字（使用指定的乾淨微陰影，不呼叫 strokeText）
+      // 繪製文字（陰影強度由滑桿即時控制；白/黃字配黑影、黑字配白影）
       const startY = cy - ((lines.length - 1) * lineHeight) / 2;
+      const isBlackText = sub.style === 'black_shadow';
+      const shStrength = state.subShadowStrength;
+
       lines.forEach((line, i) => {
         const ly = startY + i * lineHeight;
-        if (sub.style === 'white_shadow' || sub.style === 'yellow_shadow' || sub.style === 'gray_pill_shadow') {
-          ctx.shadowColor = 'rgba(0, 0, 0, 0.82)';
-          ctx.shadowBlur = Math.max(3, Math.round(6 * scale));
+        if (shStrength > 0) {
+          ctx.shadowColor = isBlackText
+            ? `rgba(255, 255, 255, ${shStrength})`
+            : `rgba(0, 0, 0, ${shStrength})`;
+          ctx.shadowBlur = Math.max(2, Math.round((4 + shStrength * 6) * scale));
           ctx.shadowOffsetX = Math.max(1, Math.round(2 * scale));
           ctx.shadowOffsetY = Math.max(1.5, Math.round(3 * scale));
         } else {
           ctx.shadowColor = 'transparent';
         }
-        ctx.fillStyle = sub.style === 'yellow_shadow' ? '#FDE047' : '#FFFFFF';
+
+        if (isBlackText) ctx.fillStyle = '#111827';
+        else if (sub.style === 'yellow_shadow') ctx.fillStyle = '#FDE047';
+        else ctx.fillStyle = '#FFFFFF';
+
         ctx.fillText(line, cx, ly);
       });
 
@@ -2528,6 +2562,21 @@
         EXPORT_BITRATE = 5_000_000;
         showToast('已切換為 720×1280 標準流暢匯出', 'info');
       }
+    });
+
+    // 字幕背景透明度與陰影程度滑桿事件
+    document.getElementById('subBgOpacitySlider').addEventListener('input', (e) => {
+      const pct = Number(e.target.value);
+      state.subBgOpacity = pct / 100;
+      document.getElementById('subBgOpacityLabel').textContent = `${pct}%`;
+      renderPreviewFrame();
+    });
+
+    document.getElementById('subShadowSlider').addEventListener('input', (e) => {
+      const pct = Number(e.target.value);
+      state.subShadowStrength = pct / 100;
+      document.getElementById('subShadowLabel').textContent = `${pct}%`;
+      renderPreviewFrame();
     });
 
     // 初始畫面繪製
