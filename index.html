@@ -338,7 +338,8 @@
             </label>
             <select id="defaultSubStyle" class="bg-studio-bg border border-studio-border text-xs text-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-orange-500 cursor-pointer">
               <option value="white_shadow">極簡白字微陰影</option>
-              <option value="gray_pill" selected>灰底半透明</option>
+              <option value="gray_pill">灰底半透明</option>
+              <option value="gray_pill_shadow" selected>灰底半透明＋黑影</option>
               <option value="dark_pill">黑底半透明</option>
               <option value="pink_tag">粉底白字標籤</option>
               <option value="yellow_shadow">黃字微陰影</option>
@@ -406,7 +407,8 @@
     // 字幕樣式設定
     const SUBTITLE_STYLES = {
       white_shadow: { label: '極簡白字微陰影' },
-      gray_pill:    { label: '灰底半透明' },
+      gray_pill:        { label: '灰底半透明' },
+      gray_pill_shadow: { label: '灰底半透明＋黑影' },
       dark_pill:    { label: '黑底半透明' },
       pink_tag:     { label: '粉底白字標籤' },
       yellow_shadow:{ label: '黃字微陰影' },
@@ -1633,14 +1635,14 @@
       const padX = Math.round(28 * scale);
       const padY = Math.round(14 * scale);
 
-      // 背景標籤樣式 (粉底白字標籤 / 黑底半透明 / 灰底半透明)
-      if (sub.style === 'pink_tag' || sub.style === 'dark_pill' || sub.style === 'gray_pill') {
+      // 背景標籤樣式 (粉底白字標籤 / 黑底半透明 / 灰底半透明 / 灰底半透明＋黑影)
+      if (sub.style === 'pink_tag' || sub.style === 'dark_pill' || sub.style === 'gray_pill' || sub.style === 'gray_pill_shadow') {
         const bgW = maxLineW + padX * 2;
         const bgH = totalH + padY * 1.4;
         const bgX = cx - bgW / 2;
         const bgY = cy - bgH / 2;
         if (sub.style === 'pink_tag') ctx.fillStyle = 'rgba(239, 134, 140, 0.94)';
-        else if (sub.style === 'gray_pill') ctx.fillStyle = 'rgba(100, 116, 139, 0.65)';
+        else if (sub.style === 'gray_pill' || sub.style === 'gray_pill_shadow') ctx.fillStyle = 'rgba(100, 116, 139, 0.65)';
         else ctx.fillStyle = 'rgba(15, 23, 42, 0.76)';
         ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
         ctx.shadowBlur = Math.round(10 * scale);
@@ -1654,8 +1656,8 @@
       const startY = cy - ((lines.length - 1) * lineHeight) / 2;
       lines.forEach((line, i) => {
         const ly = startY + i * lineHeight;
-        if (sub.style === 'white_shadow' || sub.style === 'yellow_shadow') {
-          ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
+        if (sub.style === 'white_shadow' || sub.style === 'yellow_shadow' || sub.style === 'gray_pill_shadow') {
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.82)';
           ctx.shadowBlur = Math.max(3, Math.round(6 * scale));
           ctx.shadowOffsetX = Math.max(1, Math.round(2 * scale));
           ctx.shadowOffsetY = Math.max(1.5, Math.round(3 * scale));
